@@ -85,6 +85,9 @@ import (
 	kcpinformers "github.com/kcp-dev/kcp/sdk/client/informers/externalversions"
 )
 
+// Default worker count for all controllers.
+const workerCount = 10
+
 type RunFunc func(ctx context.Context)
 type WaitFunc func(ctx context.Context, s *Server) error
 
@@ -132,6 +135,10 @@ func (s *Server) registerController(controller *controllerWrapper) error {
 	return nil
 }
 
+func postStartHookName(controllerName string) string {
+	return fmt.Sprintf("kcp-start-%s", controllerName)
+}
+
 func (s *Server) installClusterRoleAggregationController(ctx context.Context, config *rest.Config) error {
 	controllerName := "kube-cluster-role-aggregation-controller"
 	config = rest.AddUserAgent(rest.CopyConfig(config), controllerName)
@@ -146,7 +153,7 @@ func (s *Server) installClusterRoleAggregationController(ctx context.Context, co
 	return s.registerController(&controllerWrapper{
 		Name: controllerName,
 		Runner: func(ctx context.Context) {
-			c.Run(ctx, 5)
+			c.Run(ctx, workerCount)
 		},
 	})
 }
@@ -190,7 +197,7 @@ func (s *Server) installKubeNamespaceController(ctx context.Context, config *res
 	return s.registerController(&controllerWrapper{
 		Name: controllerName,
 		Runner: func(ctx context.Context) {
-			c.Run(ctx, 10)
+			c.Run(ctx, workerCount)
 		},
 	})
 }
@@ -216,7 +223,7 @@ func (s *Server) installKubeServiceAccountController(ctx context.Context, config
 	return s.registerController(&controllerWrapper{
 		Name: controllerName,
 		Runner: func(ctx context.Context) {
-			c.Run(ctx, 1)
+			c.Run(ctx, workerCount)
 		},
 	})
 }
@@ -308,7 +315,7 @@ func (s *Server) installRootCAConfigMapController(ctx context.Context, config *r
 	return s.registerController(&controllerWrapper{
 		Name: controllerName,
 		Runner: func(ctx context.Context) {
-			c.Run(ctx, 2)
+			c.Run(ctx, workerCount)
 		},
 	})
 }
@@ -342,7 +349,7 @@ func (s *Server) installTenancyLogicalClusterController(ctx context.Context, con
 	return s.registerController(&controllerWrapper{
 		Name: tenancylogicalcluster.ControllerName,
 		Runner: func(ctx context.Context) {
-			controller.Start(ctx, 10)
+			controller.Start(ctx, workerCount)
 		},
 	})
 }
@@ -386,7 +393,7 @@ func (s *Server) installLogicalClusterDeletionController(ctx context.Context, co
 	return s.registerController(&controllerWrapper{
 		Name: logicalclusterdeletion.ControllerName,
 		Runner: func(ctx context.Context) {
-			logicalClusterDeletionController.Start(ctx, 10)
+			logicalClusterDeletionController.Start(ctx, workerCount)
 		},
 	})
 }
@@ -428,7 +435,7 @@ func (s *Server) installWorkspaceScheduler(ctx context.Context, config *rest.Con
 	if err := s.registerController(&controllerWrapper{
 		Name: workspace.ControllerName,
 		Runner: func(ctx context.Context) {
-			workspaceController.Start(ctx, 2)
+			workspaceController.Start(ctx, workerCount)
 		},
 	}); err != nil {
 		return err
@@ -455,7 +462,7 @@ func (s *Server) installWorkspaceScheduler(ctx context.Context, config *rest.Con
 		if err := s.registerController(&controllerWrapper{
 			Name: shard.ControllerName,
 			Runner: func(ctx context.Context) {
-				workspaceShardController.Start(ctx, 2)
+				workspaceShardController.Start(ctx, workerCount)
 			},
 		}); err != nil {
 			return err
@@ -481,7 +488,7 @@ func (s *Server) installWorkspaceScheduler(ctx context.Context, config *rest.Con
 	if err := s.registerController(&controllerWrapper{
 		Name: workspacetype.ControllerName,
 		Runner: func(ctx context.Context) {
-			workspaceTypeController.Start(ctx, 2)
+			workspaceTypeController.Start(ctx, workerCount)
 		},
 	}); err != nil {
 		return err
@@ -518,7 +525,7 @@ func (s *Server) installWorkspaceScheduler(ctx context.Context, config *rest.Con
 	return s.registerController(&controllerWrapper{
 		Name: universalControllerName,
 		Runner: func(ctx context.Context) {
-			universalController.Start(ctx, 2)
+			universalController.Start(ctx, workerCount)
 		},
 	})
 }
@@ -572,7 +579,7 @@ func (s *Server) installWorkspaceMountsScheduler(ctx context.Context, config *re
 	return s.registerController(&controllerWrapper{
 		Name: workspacemounts.ControllerName,
 		Runner: func(ctx context.Context) {
-			workspaceMountsController.Start(ctx, 2)
+			workspaceMountsController.Start(ctx, workerCount)
 		},
 	})
 }
@@ -597,7 +604,7 @@ func (s *Server) installLogicalCluster(ctx context.Context, config *rest.Config)
 	return s.registerController(&controllerWrapper{
 		Name: logicalclusterctrl.ControllerName,
 		Runner: func(ctx context.Context) {
-			logicalClusterController.Start(ctx, 2)
+			logicalClusterController.Start(ctx, workerCount)
 		},
 	})
 }
@@ -650,7 +657,7 @@ func (s *Server) installAPIBindingController(ctx context.Context, config *rest.C
 			})
 		},
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	}); err != nil {
 		return err
@@ -683,7 +690,7 @@ func (s *Server) installAPIBindingController(ctx context.Context, config *rest.C
 	if err := s.registerController(&controllerWrapper{
 		Name: permissionclaimlabel.ControllerName,
 		Runner: func(ctx context.Context) {
-			permissionClaimLabelController.Start(ctx, 5)
+			permissionClaimLabelController.Start(ctx, workerCount)
 		},
 	}); err != nil {
 		return err
@@ -715,7 +722,7 @@ func (s *Server) installAPIBindingController(ctx context.Context, config *rest.C
 	if err := s.registerController(&controllerWrapper{
 		Name: permissionclaimlabel.ResourceControllerName,
 		Runner: func(ctx context.Context) {
-			permissionClaimLabelResourceController.Start(ctx, 2)
+			permissionClaimLabelResourceController.Start(ctx, workerCount)
 		},
 	}); err != nil {
 		return err
@@ -741,7 +748,7 @@ func (s *Server) installAPIBindingController(ctx context.Context, config *rest.C
 	return s.registerController(&controllerWrapper{
 		Name: apibindingdeletion.ControllerName,
 		Runner: func(ctx context.Context) {
-			apibindingDeletionController.Start(ctx, 10)
+			apibindingDeletionController.Start(ctx, workerCount)
 		},
 	})
 }
@@ -806,8 +813,7 @@ func (s *Server) installAPIBinderController(ctx context.Context, config *rest.Co
 		Runner: func(ctx context.Context) {
 			initializingWorkspacesKcpInformers.Start(ctx.Done())
 			initializingWorkspacesKcpInformers.WaitForCacheSync(ctx.Done())
-
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
@@ -833,7 +839,7 @@ func (s *Server) installCRDCleanupController(ctx context.Context, config *rest.C
 	return s.registerController(&controllerWrapper{
 		Name: crdcleanup.ControllerName,
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
@@ -875,7 +881,7 @@ func (s *Server) installAPIExportController(ctx context.Context, config *rest.Co
 			})
 		},
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
@@ -897,7 +903,7 @@ func (s *Server) installApisReplicateClusterRoleControllers(ctx context.Context,
 	return s.registerController(&controllerWrapper{
 		Name: apisreplicateclusterrole.ControllerName,
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
@@ -920,7 +926,7 @@ func (s *Server) installCoreReplicateClusterRoleControllers(ctx context.Context,
 	return s.registerController(&controllerWrapper{
 		Name: coresreplicateclusterrole.ControllerName,
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
@@ -942,7 +948,7 @@ func (s *Server) installApisReplicateClusterRoleBindingControllers(ctx context.C
 	return s.registerController(&controllerWrapper{
 		Name: apisreplicateclusterrolebinding.ControllerName,
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
@@ -964,7 +970,7 @@ func (s *Server) installApisReplicateLogicalClusterControllers(ctx context.Conte
 	return s.registerController(&controllerWrapper{
 		Name: apisreplicatelogicalcluster.ControllerName,
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
@@ -986,7 +992,7 @@ func (s *Server) installTenancyReplicateLogicalClusterControllers(ctx context.Co
 	return s.registerController(&controllerWrapper{
 		Name: tenancyreplicatelogicalcluster.ControllerName,
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
@@ -1009,7 +1015,7 @@ func (s *Server) installCoreReplicateClusterRoleBindingControllers(ctx context.C
 	return s.registerController(&controllerWrapper{
 		Name: corereplicateclusterrolebinding.ControllerName,
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
@@ -1031,7 +1037,7 @@ func (s *Server) installTenancyReplicateClusterRoleControllers(ctx context.Conte
 	return s.registerController(&controllerWrapper{
 		Name: tenancyreplicateclusterrole.ControllerName,
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
@@ -1053,7 +1059,7 @@ func (s *Server) installTenancyReplicateClusterRoleBindingControllers(ctx contex
 	return s.registerController(&controllerWrapper{
 		Name: tenancyreplicateclusterrolebinding.ControllerName,
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
@@ -1082,7 +1088,7 @@ func (s *Server) installAPIExportEndpointSliceController(ctx context.Context, co
 	return s.registerController(&controllerWrapper{
 		Name: apiexportendpointslice.ControllerName,
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
@@ -1109,7 +1115,7 @@ func (s *Server) installPartitionSetController(ctx context.Context, config *rest
 	return s.registerController(&controllerWrapper{
 		Name: partitionset.ControllerName,
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
@@ -1133,7 +1139,7 @@ func (s *Server) installExtraAnnotationSyncController(ctx context.Context, confi
 	return s.registerController(&controllerWrapper{
 		Name: extraannotationsync.ControllerName,
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
@@ -1174,7 +1180,7 @@ func (s *Server) installKubeQuotaController(
 	if err := s.registerController(&controllerWrapper{
 		Name: kubequota.ControllerName,
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	}); err != nil {
 		return err
@@ -1204,7 +1210,7 @@ func (s *Server) installApiExportIdentityController(ctx context.Context, config 
 	return s.registerController(&controllerWrapper{
 		Name: identitycache.ControllerName,
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 1)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
@@ -1219,7 +1225,7 @@ func (s *Server) installReplicationController(ctx context.Context, config *rest.
 	return s.registerController(&controllerWrapper{
 		Name: replication.ControllerName,
 		Runner: func(ctx context.Context) {
-			controller.Start(ctx, 2)
+			controller.Start(ctx, workerCount)
 		},
 	})
 }
@@ -1258,7 +1264,7 @@ func (s *Server) installGarbageCollectorController(ctx context.Context, config *
 	return s.registerController(&controllerWrapper{
 		Name: garbagecollector.ControllerName,
 		Runner: func(ctx context.Context) {
-			c.Start(ctx, 2)
+			c.Start(ctx, workerCount)
 		},
 	})
 }
