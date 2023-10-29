@@ -1,0 +1,31 @@
+# RBAC test
+
+1. Start KCP
+2. Create test workspace
+```
+kubectl ws create rbac-test --enter
+```
+3. Create test CRD:
+```
+kubectl apply -f test/e2e/fixtures/wildwest/wildwest.dev_cowboys.yaml
+```
+
+4. Create test instance:
+```
+kubectl apply -f test/e2e/fixtures/wildwest/wildwest.dev_cowboy.yaml
+```
+kubectl create -f cowboy.yaml
+```
+
+5. Generate kubeconfig & rbac:
+```
+go run ./repro/
+```
+6. Try getting default cowboy. This gonna work.
+```
+k get cowboys default -o yaml
+```
+7. Patch status:
+```
+kubectl patch cowboy default --type=merge --subresource status --patch 'status: {result: "success"}'
+```
