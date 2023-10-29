@@ -200,13 +200,11 @@ $(GOTESTSUM):
 
 crds: $(CONTROLLER_GEN) $(YAML_PATCH) ## Generate crds
 	./hack/update-codegen-crds.sh
-	./proxy/hack/update-codegen-crds.sh
 .PHONY: crds
 
 codegen: crds $(CODE_GENERATOR) ## Generate all
 	go mod download
 	./hack/update-codegen-clients.sh
-	./proxy/hack/update-codegen-clients.sh
 	$(MAKE) imports
 .PHONY: codegen
 
