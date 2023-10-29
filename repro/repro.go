@@ -57,7 +57,7 @@ func run(ctx context.Context) error {
 	name := "cowboy"
 
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	loadingRules.ExplicitPath = ".kcp/admin.kubeconfig"
+	loadingRules.ExplicitPath = "kcp.kubeconfig"
 	startingConfig, err := loadingRules.GetStartingConfig()
 	if err != nil {
 		return err

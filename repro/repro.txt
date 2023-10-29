@@ -12,8 +12,6 @@ kubectl apply -f test/e2e/fixtures/wildwest/wildwest.dev_cowboys.yaml
 
 4. Create test instance:
 ```
-kubectl apply -f test/e2e/fixtures/wildwest/wildwest.dev_cowboy.yaml
-```
 kubectl create -f cowboy.yaml
 ```
 
