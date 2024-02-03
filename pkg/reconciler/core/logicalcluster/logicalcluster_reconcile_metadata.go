@@ -25,12 +25,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog/v2"
 
+	"github.com/kcp-dev/kcp/pkg/cache/client/shard"
 	corev1alpha1 "github.com/kcp-dev/kcp/sdk/apis/core/v1alpha1"
 	"github.com/kcp-dev/kcp/sdk/apis/tenancy/initialization"
 	tenancyv1alpha1 "github.com/kcp-dev/kcp/sdk/apis/tenancy/v1alpha1"
 )
 
 type metaDataReconciler struct {
+	shardName func() string
 }
 
 func (r *metaDataReconciler) reconcile(ctx context.Context, logicalCluster *corev1alpha1.LogicalCluster) (reconcileStatus, error) {
@@ -69,6 +71,19 @@ func (r *metaDataReconciler) reconcile(ctx context.Context, logicalCluster *core
 				changed = true
 			}
 		}
+	}
+
+	if logicalCluster.Annotations == nil {
+		logicalCluster.Annotations = map[string]string{}
+	}
+	if val, ok := logicalCluster.Annotations[shard.AnnotationKey]; ok {
+		if val != r.shardName() {
+			logicalCluster.Annotations[shard.AnnotationKey] = r.shardName()
+			changed = true
+		}
+	} else {
+		logicalCluster.Annotations[shard.AnnotationKey] = r.shardName()
+		changed = true
 	}
 
 	if logicalCluster.Status.Phase == corev1alpha1.LogicalClusterPhaseReady {

@@ -37,7 +37,9 @@ type reconciler interface {
 
 func (c *Controller) reconcile(ctx context.Context, logicalCluster *corev1alpha1.LogicalCluster) (bool, error) {
 	reconcilers := []reconciler{
-		&metaDataReconciler{},
+		&metaDataReconciler{
+			shardName: c.shardName,
+		},
 		&phaseReconciler{},
 		&urlReconciler{shardExternalURL: c.shardExternalURL},
 	}

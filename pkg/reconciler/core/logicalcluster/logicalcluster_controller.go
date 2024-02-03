@@ -46,6 +46,7 @@ const (
 
 func NewController(
 	shardExternalURL func() string,
+	shardName func() string,
 	kcpClusterClient kcpclientset.ClusterInterface,
 	logicalClusterInformer corev1alpha1informers.LogicalClusterClusterInformer,
 ) (*Controller, error) {
@@ -54,6 +55,7 @@ func NewController(
 	c := &Controller{
 		queue:                 queue,
 		shardExternalURL:      shardExternalURL,
+		shardName:             shardName,
 		kcpClusterClient:      kcpClusterClient,
 		logicalClusterIndexer: logicalClusterInformer.Informer().GetIndexer(),
 		logicalClusterLister:  logicalClusterInformer.Lister(),
@@ -76,6 +78,7 @@ type Controller struct {
 	queue workqueue.RateLimitingInterface
 
 	shardExternalURL func() string
+	shardName        func() string
 
 	kcpClusterClient kcpclientset.ClusterInterface
 
