@@ -1270,6 +1270,51 @@ func TestUse(t *testing.T) {
 			wantStdout: []string{
 				"Current workspace is \"root:foo:bar:baz\""},
 		},
+		{
+			name: ": custom root cluster",
+			config: clientcmdapi.Config{CurrentContext: "workspace.kcp.io/current",
+				Contexts: map[string]*clientcmdapi.Context{
+					"workspace.kcp.io/current":  {Cluster: "workspace.kcp.io/current", AuthInfo: "test"},
+					"workspace.kcp.io/previous": {Cluster: "workspace.kcp.io/previous", AuthInfo: "test2"},
+				},
+				Clusters: map[string]*clientcmdapi.Cluster{
+					"workspace.kcp.io/current":  {Server: "https://test/clusters/diff-root:foo"},
+					"workspace.kcp.io/previous": {Server: "https://test/clusters/diff-root"},
+				},
+				AuthInfos: map[string]*clientcmdapi.AuthInfo{
+					"test":  {Token: "test"},
+					"test2": {Token: "test2"},
+				},
+			},
+			existingObjects: map[logicalcluster.Name][]string{
+				logicalcluster.Name("diff-root:foo"):     {"bar"},
+				logicalcluster.Name("diff-root:foo:bar"): {"baz"},
+			},
+			discovery: map[logicalcluster.Path][]*metav1.APIResourceList{
+				logicalcluster.NewPath("diff-root:foo:bar:baz"): {&metav1.APIResourceList{
+					GroupVersion: "tenancy.kcp.io/v1alpha1",
+					APIResources: []metav1.APIResource{{Name: "workspaces"}},
+				}},
+			},
+			param: ":",
+			expected: &clientcmdapi.Config{CurrentContext: "workspace.kcp.io/current",
+				Contexts: map[string]*clientcmdapi.Context{
+					"workspace.kcp.io/current":  {Cluster: "workspace.kcp.io/current", AuthInfo: "test"},
+					"workspace.kcp.io/previous": {Cluster: "workspace.kcp.io/previous", AuthInfo: "test"},
+				},
+				Clusters: map[string]*clientcmdapi.Cluster{
+					"workspace.kcp.io/current":  {Server: "https://test/clusters/diff-root:foo:bar:baz"},
+					"workspace.kcp.io/previous": {Server: "https://test/clusters/diff-root:foo"},
+				},
+				AuthInfos: map[string]*clientcmdapi.AuthInfo{
+					"test":  {Token: "test"},
+					"test2": {Token: "test2"},
+				},
+			},
+			destination: ":",
+			wantStdout: []string{
+				"Current workspace is \"diff-root\""},
+		},
 	}
 	for _, tt := range tests {
 		tt := tt

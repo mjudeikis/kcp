@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/kcp-dev/logicalcluster/v3"
 	"github.com/spf13/cobra"
 	"github.com/xlab/treeprint"
@@ -121,6 +122,8 @@ func (o *UseWorkspaceOptions) BindFlags(cmd *cobra.Command) {
 // Run executes the "use workspace" logic based on the supplied options.
 func (o *UseWorkspaceOptions) Run(ctx context.Context) error {
 	home, _ := os.UserHomeDir()
+	o.Name = strings.ReplaceAll(o.Name, "/", ":") // to avoid having checks for both / and : we replace / with :
+
 	rawConfig, err := o.ClientConfig.RawConfig()
 	if err != nil {
 		return err
@@ -183,7 +186,7 @@ func (o *UseWorkspaceOptions) Run(ctx context.Context) error {
 
 		return currentWorkspace(o.Out, newServerHost, shortWorkspaceOutput(o.ShortWorkspaceOutput), nil)
 
-	case o.Name == ".." || strings.Contains(o.Name, "../") || strings.Contains(o.Name, "..:"):
+	case strings.HasPrefix(o.Name, ".."):
 		config, err := o.ClientConfig.ClientConfig()
 		if err != nil {
 			return err
@@ -253,9 +256,14 @@ func (o *UseWorkspaceOptions) Run(ctx context.Context) error {
 		return currentWorkspace(o.Out, cfg.Host, shortWorkspaceOutput(o.ShortWorkspaceOutput), nil)
 
 	default:
-		cluster := logicalcluster.NewPath(o.Name)
+		name := o.Name
+		if strings.HasPrefix(o.Name, ".:") {
+			name = o.Name[2:]
+		}
+
+		cluster := logicalcluster.NewPath(name)
 		if !cluster.IsValid() {
-			return fmt.Errorf("invalid workspace name format: %s", o.Name)
+			return fmt.Errorf("invalid workspace name format: %s", name)
 		}
 
 		config, err := o.ClientConfig.ClientConfig()
@@ -294,6 +302,7 @@ func (o *UseWorkspaceOptions) Run(ctx context.Context) error {
 			// first try to get Workspace from parent to potentially get a 404. A 403 in the parent though is
 			// not a blocker to enter the workspace. We will do discovery as a final check below
 			parentClusterName, workspaceName := logicalcluster.NewPath(o.Name).Split()
+			spew.Dump(parentClusterName, workspaceName)
 			if _, err := o.kcpClusterClient.Cluster(parentClusterName).TenancyV1alpha1().Workspaces().Get(ctx, workspaceName, metav1.GetOptions{}); apierrors.IsNotFound(err) {
 				return fmt.Errorf("workspace %q not found", o.Name)
 			}
@@ -315,10 +324,13 @@ func (o *UseWorkspaceOptions) Run(ctx context.Context) error {
 
 			u.Path = path.Join(u.Path, cluster.RequestPath())
 			newServerHost = u.String()
-		case o.Name == core.RootCluster.String():
+		case strings.HasPrefix(o.Name, core.RootCluster.String()) || o.Name == ":"+core.RootCluster.String() || o.Name == ":":
 			// root workspace
+			o.Name = strings.TrimPrefix(o.Name, ":")
+
 			u.Path = path.Join(u.Path, cluster.RequestPath())
 			newServerHost = u.String()
+
 		default:
 			// relative logical cluster, get URL from workspace object in current context
 			ws, err := o.kcpClusterClient.Cluster(currentClusterName).TenancyV1alpha1().Workspaces().Get(ctx, o.Name, metav1.GetOptions{})
