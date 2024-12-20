@@ -68,6 +68,7 @@ func main() {
 
 	// manually extract root directory from flags first as it influence all other flags
 	rootDir := ".kcp"
+	additionalMappingsFile := ""
 	for i, f := range os.Args {
 		if f == "--root-directory" {
 			if i < len(os.Args)-1 {
@@ -75,11 +76,18 @@ func main() {
 			} // else let normal flag processing fail
 		} else if strings.HasPrefix(f, "--root-directory=") {
 			rootDir = strings.TrimPrefix(f, "--root-directory=")
+		} else if f == "--miniproxy-mapping-file" {
+			if i < len(os.Args)-1 {
+				additionalMappingsFile = os.Args[i+1]
+			} // else let normal flag processing fail
+		} else if strings.HasPrefix(f, "--miniproxy-mapping-file") {
+			additionalMappingsFile = strings.TrimPrefix(f, "--mapping-file=")
 		}
 	}
 
-	serverOptions := options.NewOptions(rootDir)
-	serverOptions.Server.GenericControlPlane.Logs.Verbosity = logsapiv1.VerbosityLevel(2)
+	kcpOptions := options.NewOptions(rootDir)
+	kcpOptions.Server.GenericControlPlane.Logs.Verbosity = logsapiv1.VerbosityLevel(2)
+	kcpOptions.Server.Extra.AdditionalMappingsFile = additionalMappingsFile
 
 	startCmd := &cobra.Command{
 		Use:   "start",
@@ -101,33 +109,33 @@ func main() {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// run as early as possible to avoid races later when some components (e.g. grpc) start early using klog
-			if err := logsapiv1.ValidateAndApply(serverOptions.Server.GenericControlPlane.Logs, kcpfeatures.DefaultFeatureGate); err != nil {
+			if err := logsapiv1.ValidateAndApply(kcpOptions.Server.GenericControlPlane.Logs, kcpfeatures.DefaultFeatureGate); err != nil {
 				return err
 			}
 
-			completed, err := serverOptions.Complete()
+			completedKcpOptions, err := kcpOptions.Complete()
 			if err != nil {
 				return err
 			}
 
-			if errs := completed.Validate(); len(errs) > 0 {
+			if errs := completedKcpOptions.Validate(); len(errs) > 0 {
 				return errors.NewAggregate(errs)
 			}
 
 			logger := klog.FromContext(cmd.Context())
-			logger.Info("running with selected batteries", "batteries", strings.Join(completed.Server.Extra.BatteriesIncluded, ","))
-
-			config, err := server.NewConfig(completed.Server)
-			if err != nil {
-				return err
-			}
-
-			completedConfig, err := config.Complete()
-			if err != nil {
-				return err
-			}
+			logger.Info("running with selected batteries", "batteries", strings.Join(completedKcpOptions.Server.Extra.BatteriesIncluded, ","))
 
 			ctx := genericapiserver.SetupSignalContext()
+
+			serverConfig, err := server.NewConfig(ctx, completedKcpOptions.Server)
+			if err != nil {
+				return err
+			}
+
+			completedConfig, err := serverConfig.Complete()
+			if err != nil {
+				return err
+			}
 
 			// the etcd server must be up before NewServer because storage decorators access it right away
 			if completedConfig.EmbeddedEtcd.Config != nil {
@@ -146,7 +154,7 @@ func main() {
 
 	// add start named flag sets to start flags
 	fss := cliflag.NamedFlagSets{}
-	serverOptions.AddFlags(&fss)
+	kcpOptions.AddFlags(&fss)
 	globalflag.AddGlobalFlags(fss.FlagSet("global"), cmd.Name(), logs.SkipLoggingConfigurationFlags())
 	startFlags := startCmd.Flags()
 	for _, f := range fss.FlagSets {

@@ -428,7 +428,6 @@ func TestReplication(t *testing.T) {
 		{"WorkspaceTypeNegative", replicateWorkspaceTypeNegativeScenario},
 	}
 	for _, scenario := range scenarios {
-		scenario := scenario
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
 			scenario.work(ctx, t, server, kcpShardDynamicClient, cacheKcpClusterDynamicClient)
@@ -446,8 +445,6 @@ func TestReplicationDisruptive(t *testing.T) {
 		{"ShardNegative", replicateShardNegativeScenario},
 	}
 	for _, scenario := range disruptiveScenarios {
-		scenario := scenario
-
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -697,15 +694,15 @@ func (b *replicateResourceScenario) verifyResourceReplicationHelper(ctx context.
 }
 
 func toUnstructured(obj interface{}, kind string, gvr schema.GroupVersionResource) (*unstructured.Unstructured, error) {
-	unstructured := &unstructured.Unstructured{Object: map[string]interface{}{}}
+	u := &unstructured.Unstructured{Object: map[string]interface{}{}}
 	raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {
 		return nil, err
 	}
-	unstructured.Object = raw
-	unstructured.SetKind(kind)
-	unstructured.SetAPIVersion(gvr.GroupVersion().String())
-	return unstructured, nil
+	u.Object = raw
+	u.SetKind(kind)
+	u.SetAPIVersion(gvr.GroupVersion().String())
+	return u, nil
 }
 
 func withPseudoRandomSuffix(name string) string {

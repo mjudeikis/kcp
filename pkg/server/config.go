@@ -175,7 +175,7 @@ func (c *Config) Complete() (CompletedConfig, error) {
 
 const KcpBootstrapperUserName = "system:kcp:bootstrapper"
 
-func NewConfig(opts kcpserveroptions.CompletedOptions) (*Config, error) {
+func NewConfig(ctx context.Context, opts kcpserveroptions.CompletedOptions) (*Config, error) {
 	c := &Config{
 		Options: opts,
 	}
@@ -324,7 +324,7 @@ func NewConfig(opts kcpserveroptions.CompletedOptions) (*Config, error) {
 		return nil, err
 	}
 
-	if err := opts.Authorization.ApplyTo(c.GenericConfig, c.KubeSharedInformerFactory, c.CacheKubeSharedInformerFactory, c.KcpSharedInformerFactory, c.CacheKcpSharedInformerFactory); err != nil {
+	if err := opts.Authorization.ApplyTo(ctx, c.GenericConfig, c.KubeSharedInformerFactory, c.CacheKubeSharedInformerFactory, c.KcpSharedInformerFactory, c.CacheKcpSharedInformerFactory); err != nil {
 		return nil, err
 	}
 	var userToken string
@@ -409,7 +409,7 @@ func NewConfig(opts kcpserveroptions.CompletedOptions) (*Config, error) {
 		authorizerWithoutAudit := genericConfig.Authorization.Authorizer
 		// configure audit logging enabled authorizer chain and build the apiHandler using this configuration.
 		genericConfig.Authorization.Authorizer = authorization.WithAuditLogging("request.auth.kcp.io", genericConfig.Authorization.Authorizer)
-		apiHandler = genericapiserver.DefaultBuildHandlerChainFromAuthz(apiHandler, genericConfig)
+		apiHandler = genericapiserver.DefaultBuildHandlerChainFromAuthzToCompletion(apiHandler, genericConfig)
 		// reset authorizer chain with audit logging disabled.
 		genericConfig.Authorization.Authorizer = authorizerWithoutAudit
 
@@ -442,7 +442,9 @@ func NewConfig(opts kcpserveroptions.CompletedOptions) (*Config, error) {
 			apiHandler = WithVirtualWorkspacesProxy(apiHandler, shardVirtualWorkspaceURL, virtualWorkspaceServerProxyTransport, proxy)
 		}
 
-		apiHandler = genericapiserver.DefaultBuildHandlerChainBeforeAuthz(apiHandler, genericConfig)
+		apiHandler = genericapiserver.DefaultBuildHandlerChainFromImpersonationToAuthz(apiHandler, genericConfig)
+		apiHandler = WithImpersonationGatekeeper(apiHandler)
+		apiHandler = genericapiserver.DefaultBuildHandlerChainFromStartToBeforeImpersonation(apiHandler, genericConfig)
 
 		// this will be replaced in DefaultBuildHandlerChain. So at worst we get twice as many warning.
 		// But this is not harmful as the kcp warnings are not many.
@@ -460,7 +462,16 @@ func NewConfig(opts kcpserveroptions.CompletedOptions) (*Config, error) {
 		apiHandler = mux
 
 		apiHandler = filters.WithAuditInit(apiHandler) // Must run before any audit annotation is made
-		apiHandler = WithLocalProxy(apiHandler, opts.Extra.ShardName, opts.Extra.ShardBaseURL, c.KcpSharedInformerFactory.Tenancy().V1alpha1().Workspaces(), c.KcpSharedInformerFactory.Core().V1alpha1().LogicalClusters())
+		apiHandler, err = WithLocalProxy(apiHandler,
+			opts.Extra.ShardName,
+			opts.Extra.ShardBaseURL,
+			opts.Extra.AdditionalMappingsFile,
+			c.KcpSharedInformerFactory.Tenancy().V1alpha1().Workspaces(),
+			c.KcpSharedInformerFactory.Core().V1alpha1().LogicalClusters(),
+		)
+		if err != nil {
+			panic(err) // shouldn't happen due to flag validation
+		}
 		apiHandler = WithInClusterServiceAccountRequestRewrite(apiHandler)
 		apiHandler = kcpfilters.WithAcceptHeader(apiHandler)
 		apiHandler = WithUserAgent(apiHandler)

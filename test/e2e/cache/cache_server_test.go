@@ -355,13 +355,13 @@ type status struct {
 }
 
 func toUnstructured(obj interface{}) (*unstructured.Unstructured, error) {
-	unstructured := &unstructured.Unstructured{Object: map[string]interface{}{}}
+	u := &unstructured.Unstructured{Object: map[string]interface{}{}}
 	raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {
 		return nil, err
 	}
-	unstructured.Object = raw
-	return unstructured, nil
+	u.Object = raw
+	return u, nil
 }
 
 func TestCacheServerAllScenarios(t *testing.T) {
@@ -382,7 +382,6 @@ func TestCacheServerAllScenarios(t *testing.T) {
 
 	cacheClientRT := cache2e.ClientRoundTrippersFor(cacheClientRestConfig)
 	for _, scenario := range scenarios {
-		scenario := scenario
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
 			scenario.work(ctx, t, cacheClientRT, logicalcluster.NewPath("acme"), schema.GroupVersionResource{Group: "apis.kcp.io", Version: "v1alpha1", Resource: "apiexports"})
