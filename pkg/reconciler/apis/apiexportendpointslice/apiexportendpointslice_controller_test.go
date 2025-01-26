@@ -79,7 +79,7 @@ func TestReconcile(t *testing.T) {
 			wantPartitionNotValid:               true,
 			wantAPIExportEndpointSliceURLsError: true,
 		},
-		"APIExportEndpointSliceURLs set when no issue": {
+		"APIExportEndpointSliceReadyForURLs set when no issue": {
 			wantAPIExportEndpointSliceURLsReady: true,
 			wantAPIExportValid:                  true,
 			wantPartitionValid:                  true,
@@ -189,7 +189,7 @@ func TestReconcile(t *testing.T) {
 			if tc.wantAPIExportEndpointSliceURLsError {
 				requireConditionMatches(t, apiExportEndpointSlice,
 					conditions.FalseCondition(
-						apisv1alpha1.APIExportEndpointSliceURLsReady,
+						apisv1alpha1.APIExportEndpointSliceReadyForURLs,
 						apisv1alpha1.ErrorGeneratingURLsReason,
 						conditionsv1alpha1.ConditionSeverityError,
 						"",
@@ -198,17 +198,13 @@ func TestReconcile(t *testing.T) {
 			}
 
 			if tc.wantAPIExportEndpointSliceURLsReady {
-				requireConditionMatches(t, apiExportEndpointSlice, conditions.TrueCondition(apisv1alpha1.APIExportEndpointSliceURLsReady))
-				require.Equal(t, []apisv1alpha1.APIExportEndpoint{
-					{URL: "https://server-1.kcp.dev/services/apiexport/root:org:ws/my-export"},
-					{URL: "https://server-2.kcp.dev/services/apiexport/root:org:ws/my-export"},
-				}, apiExportEndpointSlice.Status.APIExportEndpoints)
+				requireConditionMatches(t, apiExportEndpointSlice, conditions.TrueCondition(apisv1alpha1.APIExportEndpointSliceReadyForURLs))
 			}
 
 			if tc.wantAPIExportEndpointSliceURLsUnknown {
 				requireConditionMatches(t, apiExportEndpointSlice,
 					conditions.UnknownCondition(
-						apisv1alpha1.APIExportEndpointSliceURLsReady,
+						apisv1alpha1.APIExportEndpointSliceReadyForURLs,
 						apisv1alpha1.ErrorGeneratingURLsReason,
 						"",
 					),
