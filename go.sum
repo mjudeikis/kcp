@@ -146,8 +146,6 @@ github.com/kcp-dev/kubernetes v0.0.0-20250804141939-859549880f57 h1:XLWy85GBmGci
 github.com/kcp-dev/kubernetes v0.0.0-20250804141939-859549880f57/go.mod h1:4e1EcU7TEcAGhNa8LE8VONsTTZa6YTMi6AwiggijBVg=
 github.com/kcp-dev/kubernetes/staging/src/k8s.io/api v0.0.0-20250804141939-859549880f57 h1:hAk/Umx7EQXiUoMQ7GoIDfnJhaPvGFfmQzPFWESz6Q0=
 github.com/kcp-dev/kubernetes/staging/src/k8s.io/api v0.0.0-20250804141939-859549880f57/go.mod h1:uiagPCm7MlCfQpIm2xwPTRf8727wbCZCMgHI9uHcMpg=
-github.com/kcp-dev/kubernetes/staging/src/k8s.io/apiextensions-apiserver v0.0.0-20250804141939-859549880f57 h1:7Tym75S6F3qXo4TU9zcF9546Eg1AdVG7hzq0xQdF4k4=
-github.com/kcp-dev/kubernetes/staging/src/k8s.io/apiextensions-apiserver v0.0.0-20250804141939-859549880f57/go.mod h1:nIZXHR86Y+pIXu55PyfrUKhx5ISDzW/kjHpdOr2tKgY=
 github.com/kcp-dev/kubernetes/staging/src/k8s.io/apimachinery v0.0.0-20250804141939-859549880f57 h1:qtl1v03pdvOhdiFYvu5pQH9YdK9Of6bXe1MlEAGhsy0=
 github.com/kcp-dev/kubernetes/staging/src/k8s.io/apimachinery v0.0.0-20250804141939-859549880f57/go.mod h1:6XMZJoNYwuMArBvS2acFkTR1KqyHSp2QXRLRx9eTk5w=
 github.com/kcp-dev/kubernetes/staging/src/k8s.io/apiserver v0.0.0-20250804141939-859549880f57 h1:uRDS7RyL72ijlAfzW3qrw9+V20M1SupTpF/fPHK/8pw=
@@ -217,6 +215,8 @@ github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWE
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/mattn/go-runewidth v0.0.12 h1:Y41i/hVW3Pgwr8gV+J23B9YEY0zxjptBuCWEaxmAOow=
 github.com/mattn/go-runewidth v0.0.12/go.mod h1:RAqKPSqVFrSLVXbA8x7dzmKdmGzieGRCM46jaSJTDAk=
+github.com/mjudeikis/kubernetes/staging/src/k8s.io/apiextensions-apiserver v0.0.0-20250814145401-3be1d08a2a40 h1:4hkb22utz9zNtEw3/aFTXjAJaO+PG3tplyKu5TTfrck=
+github.com/mjudeikis/kubernetes/staging/src/k8s.io/apiextensions-apiserver v0.0.0-20250814145401-3be1d08a2a40/go.mod h1:nIZXHR86Y+pIXu55PyfrUKhx5ISDzW/kjHpdOr2tKgY=
 github.com/moby/spdystream v0.5.0 h1:7r0J1Si3QO/kjRitvSLVVFUjxMEb/YLj6S9FF62JBCU=
 github.com/moby/spdystream v0.5.0/go.mod h1:xBAYlnt/ay+11ShkdFKNAG7LsyK/tmNBVvVOwrfMgdI=
 github.com/moby/sys/mountinfo v0.7.2 h1:1shs6aH5s4o5H2zQLn796ADW1wMrIwHsyJ2v9KouLrg=
