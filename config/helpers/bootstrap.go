@@ -167,7 +167,7 @@ func createResourceFromFS(ctx context.Context, client dynamic.Interface, mapper 
 	input := Input{
 		Batteries: map[string]bool{},
 	}
-	for _, b := range sets.List[string](batteriesIncluded) {
+	for _, b := range sets.List(batteriesIncluded) {
 		input.Batteries[b] = true
 	}
 	tmpl, err := template.New("manifest").Parse(string(raw))

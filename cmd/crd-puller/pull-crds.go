@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -37,6 +36,7 @@ func main() {
 	var (
 		kubeconfigPath  = ".kubeconfig"
 		resourcesToSync []string
+		outputDir       string
 	)
 	cmd := &cobra.Command{
 		Use:        "pull-crds",
@@ -50,6 +50,14 @@ func main() {
 				`),
 		Example: "",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if outputDir != "" {
+				if _, err := os.Stat(outputDir); os.IsNotExist(err) {
+					if err := os.MkdirAll(outputDir, 0755); err != nil {
+						return err
+					}
+				}
+			}
+
 			loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 			loadingRules.ExplicitPath = kubeconfigPath
 
@@ -77,7 +85,7 @@ func main() {
 			if err != nil {
 				return err
 			}
-			crds, err := puller.PullCRDs(context.TODO(), resourcesToSync...)
+			crds, err := puller.PullCRDs(cmd.Context(), resourcesToSync...)
 			if err != nil {
 				return err
 			}
@@ -86,7 +94,12 @@ func main() {
 				if err != nil {
 					return err
 				}
-				if err := os.WriteFile(name.String()+".yaml", yamlBytes, 0644); err != nil {
+				file := name.Group + "_" + name.Resource + ".yaml"
+				if outputDir != "" {
+					file = outputDir + "/" + file
+				}
+				fmt.Printf("Writing CRD for %s to %s\n", name.String(), file)
+				if err := os.WriteFile(file, yamlBytes, 0644); err != nil {
 					return err
 				}
 			}
@@ -96,6 +109,7 @@ func main() {
 
 	cmd.Flags().StringVar(&kubeconfigPath, "kubeconfig", kubeconfigPath, "kubeconfig file used to contact the cluster.")
 	cmd.Flags().StringSliceVarP(&resourcesToSync, "resources", "r", resourcesToSync, "Resources to pull")
+	cmd.Flags().StringVar(&outputDir, "output-dir", outputDir, "Directory to write CRD files to")
 	help.FitTerminal(cmd.OutOrStdout())
 
 	if err := cmd.Execute(); err != nil {

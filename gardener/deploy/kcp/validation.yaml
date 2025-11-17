@@ -1,0 +1,18 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: "gardener.kcp.dev"
+webhooks:
+- name: "gardener.kcp.dev"
+  rules:
+  - apiGroups:   ["core.gardener.cloud"]
+    apiVersions: ["v1beta1"]
+    operations:  ["CREATE"]
+    resources:   ["shoots"]
+    scope:       "Namespaced"
+  clientConfig:
+    url: "https://localhost:9443/validate-shoot"
+    caBundle: "CA_BUNDLE_PLACEHOLDER"
+  admissionReviewVersions: ["v1"]
+  sideEffects: None
+  timeoutSeconds: 5

@@ -1,0 +1,13 @@
+apiVersion: apis.kcp.io/v1alpha2
+kind: APIExport
+metadata:
+  creationTimestamp: null
+  name: core.gardener.cloud
+spec:
+  resources:
+  - group: core.gardener.cloud
+    name: shoots
+    schema: v251117-7fb6557d0.shoots.core.gardener.cloud
+    storage:
+      crd: {}
+status: {}
