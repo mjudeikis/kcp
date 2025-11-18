@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
@@ -91,7 +92,14 @@ func NewConfig(options *options.CompletedOptions) (*Config, error) {
 		return nil, fmt.Errorf("error adding apis scheme: %w", err)
 	}
 
-	provider, err := apiexport.New(config.KcpClientConfig, apiexport.Options{
+	restConfig := config.KcpClientConfig
+	// We need to build new url
+	restConfig, err = buildClusterRestConfig(restConfig, options.APIExportEndpointSliceClusterPath)
+	if err != nil {
+		return nil, fmt.Errorf("error building kcp cluster rest config: %w", err)
+	}
+
+	provider, err := apiexport.New(restConfig, options.APIExportEndpointSliceName, apiexport.Options{
 		Scheme: scheme,
 	})
 	if err != nil {
@@ -114,4 +122,16 @@ func NewConfig(options *options.CompletedOptions) (*Config, error) {
 	config.Manager = manager
 
 	return config, nil
+}
+
+func buildClusterRestConfig(baseConfig *rest.Config, clusterPath string) (*rest.Config, error) {
+	restConfig := rest.CopyConfig(baseConfig)
+
+	u, err := url.Parse(baseConfig.Host)
+	if err != nil {
+		return nil, err
+	}
+	u.Path = fmt.Sprintf("/clusters/%s", clusterPath)
+	restConfig.Host = u.String()
+	return restConfig, nil
 }

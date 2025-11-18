@@ -23,7 +23,7 @@ type ExtraOptions struct {
 	APIExportEndpointSliceClusterPath string
 	// KCP Kubeconfig path
 	KCPKubeConfig string
-
+	// Gardener Kubeconfig path
 	GardenerKubeConfig string
 }
 
@@ -79,6 +79,10 @@ func (options *Options) Complete() (*CompletedOptions, error) {
 func (options *Options) Validate() error {
 	if err := options.Serve.Validate(); err != nil {
 		return err
+	}
+
+	if options.GardenerKubeConfig == "" || options.KCPKubeConfig == "" {
+		return fmt.Errorf("both --gardener-kubeconfig and --kcp-kubeconfig must be provided")
 	}
 
 	// If gardener kubeconfig is provided, validate it exists

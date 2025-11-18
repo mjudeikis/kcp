@@ -63,7 +63,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req mcreconcile.Request) (ct
 // SetupWithManager sets up the controller with the Manager.
 func (r *Reconciler) SetupWithManager(mgr mcmanager.Manager) error {
 	return mcbuilder.ControllerManagedBy(mgr).
-		//	For(&kubebindv1alpha2.ClusterBinding{}).
+		For(&struct{}{}).
 		//	Owns(&rbacv1.ClusterRole{}).
 		//	Owns(&rbacv1.ClusterRoleBinding{}).
 		//	Owns(&rbacv1.RoleBinding{}).

@@ -24,6 +24,7 @@ func main() {
 func run(ctx context.Context) error {
 	defer klog.Flush()
 
+	fmt.Printf("DEBUG: Command line args: %v\n", os.Args)
 	options := options.NewOptions()
 	options.AddFlags(pflag.CommandLine)
 	pflag.Parse()
@@ -35,13 +36,12 @@ func run(ctx context.Context) error {
 	if err := logsv1.ValidateAndApply(options.Logs, nil); err != nil {
 		return err
 	}
-	// create init server
+
 	err := options.Validate()
 	if err != nil {
 		return err
 	}
 
-	// create init server
 	completed, err := options.Complete()
 	if err != nil {
 		return err
