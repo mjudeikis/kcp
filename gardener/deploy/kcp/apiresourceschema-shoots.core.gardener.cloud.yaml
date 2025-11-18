@@ -231,6 +231,7 @@ spec:
                               type: string
                             type: array
                         type: object
+                        additionalProperties: true
                     required:
                     - type
                     type: object
@@ -1566,13 +1567,13 @@ spec:
                     plane config blob. Please look up the concrete definition in the
                     documentation of your provider extension.
                   type: object
-                  additionalProperties: true
+                  x-kubernetes-preserve-unknown-fields: true
                 infrastructureConfig:
                   description: InfrastructureConfig contains the provider-specific
                     infrastructure config blob. Please look up the concrete definition
                     in the documentation of your provider extension.
                   type: object
-                  additionalProperties: true
+                  x-kubernetes-preserve-unknown-fields: true
                 type:
                   description: Type is the type of the provider. This field is immutable.
                   type: string
