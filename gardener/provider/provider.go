@@ -35,7 +35,7 @@ func init() {
 	runtime.Must(apisv1alpha1.AddToScheme(scheme.Scheme))
 }
 
-func main() {
+func NewProvider() {
 	log.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	ctx := signals.SetupSignalHandler()
@@ -53,7 +53,9 @@ func main() {
 
 	// Setup a Manager, note that this not yet engages clusters, only makes them available.
 	entryLog.Info("Setting up manager")
-	opts := manager.Options{}
+	opts := manager.Options{
+		Scheme: scheme.Scheme,
+	}
 
 	var err error
 	provider, err = apiexport.New(cfg, endpointSlice, apiexport.Options{})

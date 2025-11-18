@@ -44,6 +44,18 @@ replace (
 	github.com/kcp-dev/sdk => ../staging/src/github.com/kcp-dev/sdk
 )
 
+replace (
+	github.com/google/gnostic-models => github.com/google/gnostic-models v0.6.9
+	github.com/kcp-dev/multicluster-provider => github.com/kcp-dev/multicluster-provider v0.0.0-20251118100752-8e6061e3e371
+
+	gopkg.in/yaml.v3 => gopkg.in/yaml.v3 v3.0.1
+	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff
+	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.22.3
+	sigs.k8s.io/multicluster-runtime => sigs.k8s.io/multicluster-runtime v0.22.0-beta.0.0.20251118095141-e15a9cfac31a
+
+	sigs.k8s.io/yaml => sigs.k8s.io/yaml v1.4.0
+)
+
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/kcp-dev/client-go v0.0.0
@@ -61,7 +73,7 @@ require (
 	k8s.io/component-base v0.34.1
 	k8s.io/klog/v2 v2.130.1
 	sigs.k8s.io/controller-runtime v0.22.4
-	sigs.k8s.io/multicluster-runtime v0.22.0-beta.0
+	sigs.k8s.io/multicluster-runtime v0.22.0-beta.0.0.20251118095141-e15a9cfac31a
 )
 
 require (
@@ -127,8 +139,6 @@ require (
 	go.opentelemetry.io/proto/otlp v1.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	go.yaml.in/yaml/v2 v2.4.2 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
 	golang.org/x/net v0.40.0 // indirect
@@ -152,6 +162,5 @@ require (
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.3.0 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )

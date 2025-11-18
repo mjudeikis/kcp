@@ -53,6 +53,7 @@ func run(ctx context.Context) error {
 		return err
 	}
 
+	// Server is webhook server to proxy request for dry-run validation
 	server, err := runner.NewServer(ctx, config)
 	if err != nil {
 		return err
