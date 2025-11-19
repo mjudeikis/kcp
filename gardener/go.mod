@@ -2,26 +2,15 @@ module github.com/kcp-dev/kcp/gardener
 
 go 1.25.1
 
-replace (
-	github.com/kcp-dev/multicluster-provider => github.com/kcp-dev/multicluster-provider v0.0.0-20251118100752-8e6061e3e371
-
-	github.com/kcp-dev/sdk => github.com/kcp-dev/sdk v0.0.0-20251112153223-09510ff9f18e
-
-	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.22.3
-	sigs.k8s.io/multicluster-runtime => sigs.k8s.io/multicluster-runtime v0.22.0-beta.0.0.20251118095141-e15a9cfac31a
-
-	sigs.k8s.io/yaml => sigs.k8s.io/yaml v1.4.0
-)
+replace github.com/kcp-dev/multicluster-provider => github.com/kcp-dev/multicluster-provider v0.0.0-20251118100752-8e6061e3e371
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
-	github.com/kcp-dev/client-go v0.28.1-0.20251112153209-b37f4c1ff9a2
-	github.com/kcp-dev/kcp v0.28.3
-	github.com/kcp-dev/kcp/sdk v0.28.3
+	github.com/kcp-dev/client-go v0.0.0-20250707095244-decc4df45adb
+	github.com/kcp-dev/kcp/sdk v0.28.1
 	github.com/kcp-dev/logicalcluster/v3 v3.0.5
 	github.com/kcp-dev/multicluster-provider v0.2.1
-	github.com/kcp-dev/sdk v0.0.0-00010101000000-000000000000
-	github.com/spf13/pflag v1.0.10
+	github.com/spf13/pflag v1.0.6
 	k8s.io/api v0.34.1
 	k8s.io/apiextensions-apiserver v0.34.1
 	k8s.io/apimachinery v0.34.1
@@ -29,7 +18,8 @@ require (
 	k8s.io/client-go v0.34.1
 	k8s.io/component-base v0.34.1
 	k8s.io/klog/v2 v2.130.1
-	sigs.k8s.io/controller-runtime v0.22.4
+	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
+	sigs.k8s.io/controller-runtime v0.22.3
 	sigs.k8s.io/multicluster-runtime v0.22.0-beta.0.0.20251118095141-e15a9cfac31a
 )
 
@@ -66,7 +56,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/kcp-dev/apimachinery/v2 v2.29.0-rc.1.0.20251112143648-9e5d2b714f33 // indirect
+	github.com/kcp-dev/apimachinery/v2 v2.0.1-0.20250728122101-adbf20db3e51 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -117,7 +107,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
-	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.31.2 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect

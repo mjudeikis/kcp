@@ -4,8 +4,8 @@ import (
 	"context"
 	"embed"
 
-	confighelpers "github.com/kcp-dev/kcp/config/helpers"
-	kcpclientcluster "github.com/kcp-dev/sdk/client/clientset/versioned/cluster"
+	confighelpers "github.com/kcp-dev/kcp/gardener/bootstrap/config/helpers"
+	kcpclientcluster "github.com/kcp-dev/kcp/sdk/client/clientset/versioned/cluster"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/discovery"

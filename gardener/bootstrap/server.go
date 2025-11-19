@@ -20,7 +20,7 @@ import (
 	"bytes"
 	"context"
 
-	confighelpers "github.com/kcp-dev/kcp/config/helpers"
+	confighelpers "github.com/kcp-dev/kcp/gardener/bootstrap/config/helpers"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog/v2"
 

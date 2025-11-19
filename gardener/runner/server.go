@@ -22,9 +22,9 @@ import (
 
 	"github.com/kcp-dev/kcp/gardener/runner/controllers/syncer"
 	"github.com/kcp-dev/kcp/gardener/runner/server"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	mcreconcile "sigs.k8s.io/multicluster-runtime/pkg/reconcile"
+	mccontroller "sigs.k8s.io/multicluster-runtime/pkg/controller"
 )
 
 type Server struct {
@@ -32,7 +32,7 @@ type Server struct {
 
 	WebhookServer *server.Server
 
-	SyncerController *syncer.Reconciler
+	SyncerController mccontroller.Controller
 }
 
 func NewServer(ctx context.Context, config *Config) (*Server, error) {
@@ -48,21 +48,27 @@ func NewServer(ctx context.Context, config *Config) (*Server, error) {
 
 	// Controllers to do the actual syncing
 
-	opts := controller.TypedOptions[mcreconcile.Request]{}
-
-	s.SyncerController, err = syncer.NewReconciler(
+	// create the sync controller;
+	// use the reconciler's log without any additional reconciling context
+	syncController, err := syncer.Create(
+		// This can be the reconciling context, as it's only used to find the target CRD during setup;
+		// this context *must not* be stored in the sync controller!
 		ctx,
-		config.Manager,
-		opts,
+		config.ProviderManager,
+		config.ConsumerManager,
+		schema.GroupVersionKind{
+			Group:   "core.gardener.cloud",
+			Version: "v1beta1",
+			Kind:    "Shoot",
+		},
+		"gardener-syncer",
+		klog.FromContext(ctx),
+		1,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error setting up ClusterBinding Controller: %w", err)
+		return nil, fmt.Errorf("error creating Syncer controller: %w", err)
 	}
-
-	// Register the ServiceExportRequest controller with the manager
-	if err := s.SyncerController.SetupWithManager(s.Config.Manager); err != nil {
-		return nil, fmt.Errorf("error setting up Syncer controller with manager: %w", err)
-	}
+	s.SyncerController = syncController
 
 	return s, nil
 
@@ -71,10 +77,24 @@ func NewServer(ctx context.Context, config *Config) (*Server, error) {
 func (s *Server) Start(ctx context.Context) error {
 	logger := klog.FromContext(ctx)
 
+	go func() {
+		logger.Info("Starting sync unmanaged controller manager")
+		if err := s.SyncerController.Start(ctx); err != nil {
+			logger.Error(err, "Failed to start sync unmanaged controller manager")
+		}
+	}()
 	// start controller-runtime manager after bootstrap completes
 	go func() {
-		if err := s.Config.Manager.Start(ctx); err != nil {
-			logger.Error(err, "Failed to start controller manager")
+		logger.Info("Starting provider controller manager")
+		if err := s.Config.ProviderManager.Start(ctx); err != nil {
+			logger.Error(err, "Failed to start provider controller manager")
+		}
+	}()
+
+	go func() {
+		logger.Info("Starting consumer controller manager")
+		if err := s.Config.ConsumerManager.Start(ctx); err != nil {
+			logger.Error(err, "Failed to start consumer controller manager")
 		}
 	}()
 

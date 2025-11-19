@@ -20,6 +20,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlconfig "sigs.k8s.io/controller-runtime/pkg/config"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	mcmanager "sigs.k8s.io/multicluster-runtime/pkg/manager"
 	"sigs.k8s.io/multicluster-runtime/pkg/multicluster"
@@ -32,8 +33,9 @@ type Config struct {
 	KcpClientConfig      *rest.Config
 	DynamicClient        dynamic.Interface
 
-	Provider multicluster.Provider
-	Manager  mcmanager.Manager
+	ConsumerProvider multicluster.Provider
+	ConsumerManager  mcmanager.Manager
+	ProviderManager  manager.Manager
 
 	// Webhook server configuration
 	WebhookServer *http.Server
@@ -114,12 +116,18 @@ func NewConfig(options *options.CompletedOptions) (*Config, error) {
 		Scheme: scheme,
 	}
 
-	manager, err := mcmanager.New(config.KcpClientConfig, provider, opts)
+	consumerManager, err := mcmanager.New(config.KcpClientConfig, provider, opts)
 	if err != nil {
 		return nil, fmt.Errorf("error setting up controller manager: %w", err)
 	}
+	config.ConsumerManager = consumerManager
+	config.ConsumerProvider = provider
 
-	config.Manager = manager
+	providerManager, err := manager.New(config.ProviderClientConfig, opts)
+	if err != nil {
+		return nil, fmt.Errorf("error setting up provider controller manager: %w", err)
+	}
+	config.ProviderManager = providerManager
 
 	return config, nil
 }
