@@ -1,67 +1,38 @@
-kind: Shoot
 apiVersion: core.gardener.cloud/v1beta1
+kind: Shoot
 metadata:
-  name: kcp
-  namespace: garden-kcp
+  name: local1
+  namespace: garden-local
+  annotations:
+    shoot.gardener.cloud/cloud-config-execution-max-delay-seconds: "0"
+    authentication.gardener.cloud/issuer: "managed"
 spec:
-  provider:
-    type: aws
-    infrastructureConfig:
-      apiVersion: aws.provider.extensions.gardener.cloud/v1alpha1
-      kind: InfrastructureConfig
-      networks:
-        vpc:
-          cidr: 10.180.0.0/16
-        zones:
-          - name: eu-west-1b
-            workers: 10.180.0.0/19
-            public: 10.180.32.0/20
-            internal: 10.180.48.0/20
-    controlPlaneConfig:
-      apiVersion: aws.provider.extensions.gardener.cloud/v1alpha1
-      kind: ControlPlaneConfig
-    workers:
-      - name: worker-eplnj
-        minimum: 1
-        maximum: 2
-        maxSurge: 1
-        machine:
-          type: m5.large
-          image:
-            name: gardenlinux
-            version: 1877.6.0
-          architecture: amd64
-        zones:
-          - eu-west-1b
-        cri:
-          name: containerd
-        volume:
-          type: gp3
-          size: 50Gi
-  networking:
-    nodes: 10.180.0.0/16
-    type: calico
-  kubernetes:
-    version: 1.33.5
   cloudProfile:
-    name: aws
     kind: CloudProfile
-  secretBindingName: mcpkcp-aws
-  purpose: evaluation
-  region: eu-west-1
-  addons:
-    kubernetesDashboard:
-      enabled: false
-    nginxIngress:
-      enabled: false
-  maintenance:
-    autoUpdate:
-      kubernetesVersion: true
-      machineImageVersion: true
-    timeWindow:
-      begin: 020000+0200
-      end: 030000+0200
-  hibernation:
-    schedules:
-      - location: Europe/Vilnius
-        start: 00 17 * * 1,2,3,4,5
+    name: local
+  credentialsBindingName: local # dummy, doesn't contain any credentials
+  region: local
+  networking:
+    type: calico
+    # Must be within 10.0.0.0/16 (subnet of kind pod CIDR 10.0.0.0/15, but disjoint with seed pod CIDR 10.1.0.0/16).
+    nodes: 10.0.0.0/16
+  provider:
+    type: local
+    workers:
+    - name: local
+      machine:
+        type: local
+      cri:
+        name: containerd
+      minimum: 1
+      maximum: 2
+      maxSurge: 1
+      maxUnavailable: 0
+  kubernetes:
+    kubelet:
+      seccompDefault: true
+      serializeImagePulls: false
+      registryPullQPS: 10
+      registryBurst: 20
+      protectKernelDefaults: true
+      streamingConnectionIdleTimeout: 5m

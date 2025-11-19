@@ -27,7 +27,6 @@ func main() {
 func run(ctx context.Context) error {
 	defer klog.Flush()
 
-	fmt.Printf("DEBUG: Command line args: %v\n", os.Args)
 	options := options.NewOptions()
 	options.AddFlags(pflag.CommandLine)
 	pflag.Parse()

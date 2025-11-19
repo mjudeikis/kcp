@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kcp-dev/logicalcluster/v3"
+	"github.com/kcp-dev/kcp/gardener/runner/mutators"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -30,9 +31,6 @@ import (
 
 const (
 	controllerName = "syncer-controller"
-
-	// OriginClusterAnnotation stores the cluster name where the object originated
-	OriginClusterAnnotation = "syncer.kcp.io/origin-cluster"
 )
 
 // Reconciler reconciles a GVR object to the provider cluster.
@@ -43,7 +41,6 @@ type Reconciler struct {
 	consumerManager mcmanager.Manager
 
 	gvk       schema.GroupVersionKind
-	log       klog.Logger
 	agentName string
 }
 
@@ -69,7 +66,6 @@ func Create(
 		providerClient:  providerManager.GetClient(),
 		consumerManager: consumerManager,
 		gvk:             gvk,
-		log:             log,
 		agentName:       agentName,
 	}
 
@@ -97,6 +93,11 @@ func Create(
 	enqueueConsumerObjForProviderObj := handler.TypedEnqueueRequestsFromMapFunc(func(ctx context.Context, o *unstructured.Unstructured) []mcreconcile.Request {
 		// Determine target consumer cluster - could be based on labels, annotations, or configuration
 		targetCluster := getTargetProviderCluster(o)
+		if targetCluster == "" {
+			log.V(4).Info("No target cluster found for object. Skipping", "namespace", o.GetNamespace(), "name", o.GetName())
+			// No specific target cluster, skip reconciliation
+			return nil
+		}
 
 		return []mcreconcile.Request{
 			{
@@ -113,7 +114,7 @@ func Create(
 
 	// Only watch source objects that we manage
 	nameFilter := predicate.NewTypedPredicateFuncs(func(u *unstructured.Unstructured) bool {
-		return isOwnedBy(u, agentName)
+		return true // Add filtering logic if needed
 	})
 
 	if err := c.Watch(source.TypedKind(providerManager.GetCache(), providerDummy, enqueueConsumerObjForProviderObj, nameFilter)); err != nil {
@@ -127,7 +128,7 @@ func Create(
 
 // Reconcile syncs the spec to provider and status back from provider.
 func (r *Reconciler) Reconcile(ctx context.Context, req mcreconcile.Request) (ctrl.Result, error) {
-	logger := r.log.WithValues("cluster", req.ClusterName, "namespace", req.NamespacedName.Namespace, "name", req.NamespacedName.Name)
+	logger := klog.FromContext(ctx).WithValues("cluster", req.ClusterName, "namespace", req.NamespacedName.Namespace, "name", req.NamespacedName.Name)
 	logger.Info("Processing")
 
 	// Get provider cluster client
@@ -135,12 +136,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req mcreconcile.Request) (ct
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to get cluster: %w", err)
 	}
-	providerClient := cl.GetClient()
+	consumerClient := cl.GetClient()
+	providerClient := r.providerClient
 
 	// Get the source object
-	sourceObj := &unstructured.Unstructured{}
-	sourceObj.SetGroupVersionKind(r.gvk.GroupVersion().WithKind(r.gvk.Kind))
-	if err := providerClient.Get(ctx, req.NamespacedName, sourceObj); err != nil {
+	consumerObj := &unstructured.Unstructured{}
+	consumerObj.SetGroupVersionKind(r.gvk.GroupVersion().WithKind(r.gvk.Kind))
+	if err := consumerClient.Get(ctx, req.NamespacedName, consumerObj); err != nil {
 		if ctrlruntimeclient.IgnoreNotFound(err) != nil {
 			return ctrl.Result{}, fmt.Errorf("failed to get source object: %w", err)
 		}
@@ -148,13 +150,28 @@ func (r *Reconciler) Reconcile(ctx context.Context, req mcreconcile.Request) (ct
 		return r.deleteFromProvider(ctx, providerClient, req.NamespacedName)
 	}
 
+	providerObj := &unstructured.Unstructured{}
+	providerObj.SetGroupVersionKind(r.gvk.GroupVersion().WithKind(r.gvk.Kind))
+	err = providerClient.Get(ctx, req.NamespacedName, providerObj)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// Provider object does not exist, create it
+			logger.Info("Provider object not found, creating")
+			if err := r.syncToProvider(ctx, providerClient, consumerObj, nil); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to sync spec to provider: %w", err)
+			}
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil // Requeue to check status later
+		}
+		return ctrl.Result{}, fmt.Errorf("failed to get provider object: %w", err)
+	}
+
 	// Sync spec to provider
-	if err := r.syncSpecToProvider(ctx, providerClient, sourceObj); err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed to sync spec to provider: %w", err)
+	if err := r.syncToProvider(ctx, providerClient, consumerObj, providerObj); err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed to update spec to provider: %w", err)
 	}
 
 	// Sync status back from provider
-	if err := r.syncStatusFromProvider(ctx, providerClient, sourceObj); err != nil {
+	if err := r.syncFromProvider(ctx, consumerClient, consumerObj, providerObj); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to sync status from provider: %w", err)
 	}
 
@@ -162,65 +179,27 @@ func (r *Reconciler) Reconcile(ctx context.Context, req mcreconcile.Request) (ct
 }
 
 // syncSpecToProvider syncs the object spec to the provider cluster.
-func (r *Reconciler) syncSpecToProvider(ctx context.Context, providerClient ctrlruntimeclient.Client, sourceObj *unstructured.Unstructured) error {
-	providerObj := &unstructured.Unstructured{}
-	providerObj.SetGroupVersionKind(sourceObj.GetObjectKind().GroupVersionKind())
-	providerObj.SetNamespace(sourceObj.GetNamespace())
-	providerObj.SetName(sourceObj.GetName())
-
-	// Add origin cluster annotation to preserve source cluster information
-	annotations := providerObj.GetAnnotations()
-	if annotations == nil {
-		annotations = make(map[string]string)
+func (r *Reconciler) syncToProvider(ctx context.Context, providerClient ctrlruntimeclient.Client, consumerObj, providerObj *unstructured.Unstructured) error {
+	// Mutate the object before syncing
+	mutator, err := mutators.GetMutator(r.gvk)
+	if err != nil {
+		return fmt.Errorf("failed to get mutator for GVK %s: %w", r.gvk.String(), err)
 	}
 
-	cluster := logicalcluster.From(sourceObj)
+	isCreate := providerObj == nil
 
-	annotations[OriginClusterAnnotation] = cluster.String()
-	providerObj.SetAnnotations(annotations)
-
-	// Copy spec from source to provider object
-	if spec, found, err := unstructured.NestedMap(sourceObj.Object, "spec"); err != nil {
-		return fmt.Errorf("failed to get spec from source object: %w", err)
-	} else if found {
-		if err := unstructured.SetNestedMap(providerObj.Object, spec, "spec"); err != nil {
-			return fmt.Errorf("failed to set spec in provider object: %w", err)
-		}
+	providerObj, err = mutator.ToProvider(consumerObj, providerObj)
+	if err != nil {
+		return fmt.Errorf("failed to mutate object to provider format: %w", err)
 	}
 
-	// Create or update in provider cluster
-	if err := providerClient.Create(ctx, providerObj); err != nil {
-		if ctrlruntimeclient.IgnoreAlreadyExists(err) != nil {
+	if isCreate {
+		if err := providerClient.Create(ctx, providerObj); err != nil {
 			return fmt.Errorf("failed to create object in provider: %w", err)
 		}
-		// Object exists, update it
-		existingObj := &unstructured.Unstructured{}
-		existingObj.SetGroupVersionKind(providerObj.GetObjectKind().GroupVersionKind())
-		if err := providerClient.Get(ctx, types.NamespacedName{
-			Namespace: providerObj.GetNamespace(),
-			Name:      providerObj.GetName(),
-		}, existingObj); err != nil {
-			return fmt.Errorf("failed to get existing object from provider: %w", err)
-		}
-
-		// Update annotations to preserve origin cluster
-		annotations := existingObj.GetAnnotations()
-		if annotations == nil {
-			annotations = make(map[string]string)
-		}
-		annotations[OriginClusterAnnotation] = cluster.String()
-		existingObj.SetAnnotations(annotations)
-
-		// Update spec
-		if spec, found, err := unstructured.NestedMap(sourceObj.Object, "spec"); err != nil {
-			return fmt.Errorf("failed to get spec from source object: %w", err)
-		} else if found {
-			if err := unstructured.SetNestedMap(existingObj.Object, spec, "spec"); err != nil {
-				return fmt.Errorf("failed to set spec in existing object: %w", err)
-			}
-		}
-
-		if err := providerClient.Update(ctx, existingObj); err != nil {
+		return nil
+	} else {
+		if err := providerClient.Update(ctx, providerObj); err != nil {
 			return fmt.Errorf("failed to update object in provider: %w", err)
 		}
 	}
@@ -229,8 +208,26 @@ func (r *Reconciler) syncSpecToProvider(ctx context.Context, providerClient ctrl
 }
 
 // syncStatusFromProvider syncs the object status back from the provider cluster.
-func (r *Reconciler) syncStatusFromProvider(ctx context.Context, providerClient ctrlruntimeclient.Client, sourceObj *unstructured.Unstructured) error {
-	// TODO: Implement status sync logic as needed.
+func (r *Reconciler) syncFromProvider(ctx context.Context, consumerClient ctrlruntimeclient.Client, consumerObj, providerObj *unstructured.Unstructured) error {
+	// Mutate the object before syncing
+	mutator, err := mutators.GetMutator(r.gvk)
+	if err != nil {
+		return fmt.Errorf("failed to get mutator for GVK %s: %w", r.gvk.String(), err)
+	}
+
+	consumerObj, err = mutator.ToConsumer(providerObj, consumerObj)
+	if err != nil {
+		return fmt.Errorf("failed to mutate object to consumer format: %w", err)
+	}
+
+	err = consumerClient.Update(ctx, consumerObj)
+	if err != nil {
+		return fmt.Errorf("failed to update object in consumer: %w", err)
+	}
+
+	if err := consumerClient.Status().Update(ctx, consumerObj); err != nil {
+		return fmt.Errorf("failed to update object in consumer: %w", err)
+	}
 
 	return nil
 }
@@ -250,15 +247,5 @@ func getTargetProviderCluster(obj *unstructured.Unstructured) string {
 			return cluster
 		}
 	}
-	return "this-does-not-exist" // Default cluster name if none specified
-}
-
-// isOwnedBy checks if an object is owned by the specified agent.
-func isOwnedBy(obj *unstructured.Unstructured, agentName string) bool {
-	ann := obj.GetAnnotations()
-	if ann == nil {
-		return false
-	}
-	owner, exists := ann["syncer.kcp.io/owner"]
-	return exists && owner == agentName
+	return "" // Empty
 }

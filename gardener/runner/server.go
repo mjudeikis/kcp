@@ -70,6 +70,11 @@ func NewServer(ctx context.Context, config *Config) (*Server, error) {
 	}
 	s.SyncerController = syncController
 
+	err = s.Config.ConsumerManager.Add(s.SyncerController)
+	if err != nil {
+		return nil, fmt.Errorf("error adding Syncer controller to ConsumerManager: %w", err)
+	}
+
 	return s, nil
 
 }
@@ -77,12 +82,6 @@ func NewServer(ctx context.Context, config *Config) (*Server, error) {
 func (s *Server) Start(ctx context.Context) error {
 	logger := klog.FromContext(ctx)
 
-	go func() {
-		logger.Info("Starting sync unmanaged controller manager")
-		if err := s.SyncerController.Start(ctx); err != nil {
-			logger.Error(err, "Failed to start sync unmanaged controller manager")
-		}
-	}()
 	// start controller-runtime manager after bootstrap completes
 	go func() {
 		logger.Info("Starting provider controller manager")
