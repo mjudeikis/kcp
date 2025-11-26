@@ -7,24 +7,27 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/kcp-dev/kcp/gardener/runner/options"
+	"github.com/kcp-dev/kcp/sdk/client/clientset/versioned/scheme"
 	admissionv1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+func init() {
+	v1beta1.AddToScheme(scheme.Scheme)
+}
 
 type Server struct {
 	Config *options.Serve
 
-	DynamicClient dynamic.Interface
+	client client.Client
 
 	WebhookServer *http.Server
 }
@@ -35,7 +38,9 @@ func NewServer(ctx context.Context, targetRest *rest.Config, config *options.Ser
 	}
 
 	var err error
-	if s.DynamicClient, err = dynamic.NewForConfig(targetRest); err != nil {
+	if s.client, err = client.New(targetRest, client.Options{
+		Scheme: scheme.Scheme,
+	}); err != nil {
 		return nil, err
 	}
 
@@ -137,31 +142,20 @@ func (s *Server) handleValidateShoot(w http.ResponseWriter, r *http.Request) {
 		klog.V(4).Infof("Object data received: %s", string(req.Object.Raw))
 
 		// Example: Parse the object and perform validation
-		var obj *unstructured.Unstructured
+		var obj *v1beta1.Shoot
 		if err := json.Unmarshal(req.Object.Raw, &obj); err != nil {
 			allowed = false
 			message = fmt.Sprintf("Failed to parse object: %v", err)
 		}
 
-		client := s.DynamicClient.Resource(schema.GroupVersionResource{
-			Group:    obj.GroupVersionKind().Group,
-			Resource: strings.ToLower(obj.GetKind() + "s"),
-			Version:  obj.GroupVersionKind().Version,
-		})
-		// DO a get to see if object does not exists - dry run on existing object passes
-
-		_, err := client.Namespace(obj.GetNamespace()).Get(r.Context(), obj.GetName(), metav1.GetOptions{})
+		err := s.client.Get(r.Context(), client.ObjectKey{Namespace: obj.Namespace, Name: obj.Name}, obj)
 		if err == nil {
 			allowed = false
 			message = "Object already exists"
 		} else {
 
 			klog.V(4).Infof("Parsed object: %s", spew.Sdump(obj))
-			_, err = client.Namespace(obj.GetNamespace()).Create(r.Context(), obj, metav1.CreateOptions{
-				DryRun: []string{
-					metav1.DryRunAll,
-				},
-			})
+			err = s.client.Create(r.Context(), obj, &client.CreateOptions{DryRun: []string{"All"}})
 			if err != nil {
 				allowed = false
 				message = fmt.Sprintf("Dynamic client create failed: %v", err)
@@ -247,29 +241,19 @@ func (s *Server) handleMutateShoot(w http.ResponseWriter, r *http.Request) {
 		klog.V(4).Infof("Object data received: %s", string(req.Object.Raw))
 
 		// Example: Parse the object and perform mutation via proxy to provider cluster
-		var obj *unstructured.Unstructured
+		var obj *v1beta1.Shoot
 		if err := json.Unmarshal(req.Object.Raw, &obj); err != nil {
 			allowed = false
 			message = fmt.Sprintf("Failed to parse object: %v", err)
 		} else {
-			client := s.DynamicClient.Resource(schema.GroupVersionResource{
-				Group:    obj.GroupVersionKind().Group,
-				Resource: strings.ToLower(obj.GetKind() + "s"),
-				Version:  obj.GroupVersionKind().Version,
-			})
-
 			// Check if object already exists - dry run on existing object passes
-			_, err := client.Namespace(obj.GetNamespace()).Get(r.Context(), obj.GetName(), metav1.GetOptions{})
+			err := s.client.Get(r.Context(), client.ObjectKey{Namespace: obj.Namespace, Name: obj.Name}, obj)
 			if err == nil {
 				allowed = false
 				message = "Object already exists"
 			} else {
 				klog.V(4).Infof("Parsed object: %s", spew.Sdump(obj))
-				obj, err = client.Namespace(obj.GetNamespace()).Create(r.Context(), obj, metav1.CreateOptions{
-					DryRun: []string{
-						metav1.DryRunAll,
-					},
-				})
+				err = s.client.Create(r.Context(), obj, &client.CreateOptions{DryRun: []string{"All"}})
 				if err != nil {
 					allowed = false
 					message = fmt.Sprintf("Dynamic client create failed: %v", err)

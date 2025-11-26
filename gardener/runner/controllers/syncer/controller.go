@@ -155,7 +155,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req mcreconcile.Request) (ct
 	if consumerObj.GetDeletionTimestamp() != nil {
 		// Object is being deleted, delete from provider
 		r, err := r.deleteFromProvider(ctx, providerClient, req.NamespacedName)
-		if err != nil {
+		if err != nil || r.RequeueAfter > 0 { // once deleted from provider, remove finalizer, before that - wait
 			return r, err
 		}
 		logger.Info("Object is being deleted, deleted from provider if existed")
@@ -317,7 +317,7 @@ func (r *Reconciler) deleteFromProvider(ctx context.Context, providerClient ctrl
 	logger := klog.FromContext(ctx).WithValues("namespace", namespacedName.Namespace, "name", namespacedName.Name)
 	logger.Info("Deleted object from provider cluster")
 
-	return ctrl.Result{}, nil
+	return ctrl.Result{RequeueAfter: time.Second * 10}, nil
 }
 
 // getTargetProviderCluster determines which provider cluster to sync the object to.
