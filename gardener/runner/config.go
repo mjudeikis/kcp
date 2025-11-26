@@ -23,7 +23,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	mcmanager "sigs.k8s.io/multicluster-runtime/pkg/manager"
-	"sigs.k8s.io/multicluster-runtime/pkg/multicluster"
 )
 
 type Config struct {
@@ -33,9 +32,8 @@ type Config struct {
 	KcpClientConfig      *rest.Config
 	DynamicClient        dynamic.Interface
 
-	ConsumerProvider multicluster.Provider
-	ConsumerManager  mcmanager.Manager
-	ProviderManager  manager.Manager
+	ConsumerManager mcmanager.Manager
+	ProviderManager manager.Manager
 
 	// Webhook server configuration
 	WebhookServer *http.Server
@@ -121,7 +119,6 @@ func NewConfig(options *options.CompletedOptions) (*Config, error) {
 		return nil, fmt.Errorf("error setting up controller manager: %w", err)
 	}
 	config.ConsumerManager = consumerManager
-	config.ConsumerProvider = provider
 
 	providerManager, err := manager.New(config.ProviderClientConfig, opts)
 	if err != nil {

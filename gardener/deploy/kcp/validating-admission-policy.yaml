@@ -1,0 +1,15 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: "gardener-shoot-name-length-policy"
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups:   ["core.gardener.cloud"]
+      apiVersions: ["v1beta1"]
+      operations:  ["CREATE", "UPDATE"]
+      resources:   ["shoots"]
+  validations:
+    - expression: "size(object.metadata.name) >= 10"
+      message: "Shoot name must be at least 10 characters long"

@@ -1,0 +1,199 @@
+apiVersion: core.gardener.cloud/v1beta1
+kind: Shoot
+metadata:
+  annotations:
+    authentication.gardener.cloud/issuer: managed
+    extensions.gardener.cloud/processed-by: admission-webhook-local-provider
+    kcp.io/cluster: 37usijrgjqqck4hj
+    shoot.gardener.cloud/cloud-config-execution-max-delay-seconds: "0"
+    syncer.kcp.io/origin-cluster: 37usijrgjqqck4hj
+  creationTimestamp: "2025-11-20T08:52:26Z"
+  finalizers:
+  - gardener
+  generation: 133
+  labels:
+    name.seed.gardener.cloud/local: "true"
+    networking.extensions.gardener.cloud/calico: "true"
+    operatingsystemconfig.extensions.gardener.cloud/local: "true"
+    provider.extensions.gardener.cloud/local: "true"
+    shoot.gardener.cloud/status: unhealthy
+  name: local1
+  namespace: garden-local
+  resourceVersion: "8895"
+  uid: b1a97c5b-81b2-4688-9c11-cc9646d25a49
+spec:
+  addons:
+    kubernetesDashboard:
+      authenticationMode: token
+      enabled: false
+  cloudProfile:
+    kind: CloudProfile
+    name: local
+  credentialsBindingName: local
+  dns:
+    domain: local1.local.external.local.gardener.cloud
+  kubernetes:
+    kubeAPIServer:
+      defaultNotReadyTolerationSeconds: 300
+      defaultUnreachableTolerationSeconds: 300
+      eventTTL: 1h0m0s
+      logging:
+        verbosity: 2
+      requests:
+        maxMutatingInflight: 200
+        maxNonMutatingInflight: 400
+    kubeControllerManager:
+      nodeCIDRMaskSize: 24
+      nodeMonitorGracePeriod: 40s
+    kubeProxy:
+      enabled: true
+      mode: IPTables
+    kubeScheduler:
+      profile: balanced
+    kubelet:
+      failSwapOn: true
+      imageGCHighThresholdPercent: 50
+      imageGCLowThresholdPercent: 40
+      imageMaximumGCAge: 0s
+      imageMinimumGCAge: 2m0s
+      kubeReserved:
+        cpu: 80m
+        memory: 1Gi
+        pid: 20k
+      protectKernelDefaults: true
+      registryBurst: 20
+      registryPullQPS: 10
+      seccompDefault: true
+      serializeImagePulls: false
+      streamingConnectionIdleTimeout: 5m0s
+    version: 1.34.0
+  maintenance:
+    autoUpdate:
+      kubernetesVersion: true
+      machineImageVersion: true
+    timeWindow:
+      begin: 170000+0000
+      end: 180000+0000
+  networking:
+    ipFamilies:
+    - IPv4
+    nodes: 10.0.0.0/16
+    pods: 10.3.0.0/16
+    services: 10.4.0.0/16
+    type: calico
+  provider:
+    type: local
+    workers:
+    - cri:
+        name: containerd
+      machine:
+        architecture: amd64
+        image:
+          name: local
+          version: 1.0.0
+        type: local
+      maxSurge: 1
+      maxUnavailable: 0
+      maximum: 2
+      minimum: 1
+      name: local
+      systemComponents:
+        allow: true
+      updateStrategy: AutoRollingUpdate
+    workersSettings:
+      sshAccess:
+        enabled: true
+  purpose: evaluation
+  region: local
+  schedulerName: default-scheduler
+  seedName: local
+  systemComponents:
+    coreDNS:
+      autoscaling:
+        mode: horizontal
+status:
+  advertisedAddresses:
+  - name: external
+    url: https://api.local1.local.external.local.gardener.cloud
+  - name: internal
+    url: https://api.local1.local.internal.local.gardener.cloud
+  - name: service-account-issuer
+    url: https://discovery.local.gardener.cloud/projects/local/shoots/b1a97c5b-81b2-4688-9c11-cc9646d25a49/issuer
+  clusterIdentity: shoot--local--local1-b1a97c5b-81b2-4688-9c11-cc9646d25a49-gardener-local
+  conditions:
+  - lastTransitionTime: "2025-11-20T08:55:50Z"
+    lastUpdateTime: "2025-11-20T08:56:18Z"
+    message: API server /healthz endpoint responded with success status code.
+    reason: HealthzRequestSucceeded
+    status: "True"
+    type: APIServerAvailable
+  - lastTransitionTime: "2025-11-20T08:58:27Z"
+    lastUpdateTime: "2025-11-20T08:58:27Z"
+    message: All control plane components are healthy.
+    reason: ControlPlaneRunning
+    status: "True"
+    type: ControlPlaneHealthy
+  - lastTransitionTime: "2025-11-20T08:57:27Z"
+    lastUpdateTime: "2025-11-20T08:56:18Z"
+    message: 'VerticalPodAutoscaler "shoot--local--local1/prometheus-shoot" is unhealthy:
+      condition "ConfigUnsupported" has invalid status True (expected False) due
+      to : Unknown error during checking if target monitoring.coreos.com/v1.Prometheus/shoot
+      is a topmost well-known or scalable controller'
+    reason: VerticalPodAutoscalerUnhealthy
+    status: "False"
+    type: ObservabilityComponentsHealthy
+  - lastTransitionTime: "2025-11-20T08:55:56Z"
+    lastUpdateTime: "2025-11-20T08:56:18Z"
+    message: All nodes are ready.
+    reason: EveryNodeReady
+    status: "True"
+    type: EveryNodeReady
+  - lastTransitionTime: "2025-11-20T08:56:57Z"
+    lastUpdateTime: "2025-11-20T08:56:57Z"
+    message: All system components are healthy.
+    reason: SystemComponentsRunning
+    status: "True"
+    type: SystemComponentsHealthy
+  constraints:
+  - lastTransitionTime: "2025-11-20T08:54:40Z"
+    lastUpdateTime: "2025-11-20T08:54:40Z"
+    message: Shoot uses http-proxy port 8443 for VPN
+    reason: ShootUsesUnifiedHTTPProxyPort
+    status: "True"
+    type: UsesUnifiedHTTPProxyPort
+  - lastTransitionTime: "2025-11-20T08:55:50Z"
+    lastUpdateTime: "2025-11-20T08:56:18Z"
+    message: All webhooks are properly configured.
+    reason: NoProblematicWebhooks
+    status: "True"
+    type: HibernationPossible
+  - lastTransitionTime: "2025-11-20T08:55:50Z"
+    lastUpdateTime: "2025-11-20T08:56:18Z"
+    message: All webhooks are properly configured.
+    reason: NoProblematicWebhooks
+    status: "True"
+    type: MaintenancePreconditionsSatisfied
+  gardener:
+    id: Bgt6E01yM08Ndx6osG0kSOeSw2RxgmbL5ZY4gbjQ8bmQGqbVgKUMsPCvtZsboO5c
+    name: gardenlet-6447c844f6-xxw5t
+    version: v1.133.0-dev
+  hibernated: false
+  lastOperation:
+    description: Shoot cluster has been successfully reconciled.
+    lastUpdateTime: "2025-11-20T08:56:18Z"
+    progress: 100
+    state: Succeeded
+    type: Reconcile
+  networking:
+    egressCIDRs:
+    - 10.0.0.0/16
+    nodes:
+    - 10.0.0.0/16
+    pods:
+    - 10.3.0.0/16
+    services:
+    - 10.4.0.0/16
+  observedGeneration: 133
+  seedName: local
+  technicalID: shoot--local--local1
+  uid: b1a97c5b-81b2-4688-9c11-cc9646d25a49

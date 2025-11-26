@@ -24,8 +24,8 @@ var (
 )
 
 type Mutator struct {
-	ToProvider func(consumer, provider *unstructured.Unstructured) (*unstructured.Unstructured, error)
-	ToConsumer func(provider, consumer *unstructured.Unstructured) (*unstructured.Unstructured, error)
+	ToProvider func(consumer, provider *unstructured.Unstructured) error
+	ToConsumer func(provider, consumer *unstructured.Unstructured) error
 }
 
 var (
@@ -58,24 +58,25 @@ var preserveToProvider = []string{
 	"spec.networking.services",
 }
 
-func ShootToProvider(consumer, provider *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+// ShootToProvider mutates shoot object from consumer to provider format.
+// It takes fields from provider first, which are "preserved", then copies them ontop of the consumer spec.
+// Finally it copies the entire spec from consumer to provider, effectively overwriting everything except preserved fields.
+// It modified object in place so caller should pass a copy of the original object if needed.
+func ShootToProvider(consumer, provider *unstructured.Unstructured) error {
 	if consumer == nil {
-		return nil, fmt.Errorf("consumer object is nil")
+		return fmt.Errorf("consumer object is nil")
 	}
-
-	// Create a deep copy of the consumer object to mutate
-	trowAwayConsumerCopy := consumer.DeepCopy()
 
 	// If provider object exists, check if any preserveToProvider fields have changed
 	// and copy them back to consumer spec
 	if provider != nil {
 		for _, fieldPath := range preserveToProvider {
 			if providerValue, found, err := unstructured.NestedFieldCopy(provider.Object, parseFieldPath(fieldPath)...); err != nil {
-				return nil, fmt.Errorf("failed to get field %s from provider: %w", fieldPath, err)
+				return fmt.Errorf("failed to get field %s from provider: %w", fieldPath, err)
 			} else if found {
 				// Copy provider field value back to consumer spec
-				if err := unstructured.SetNestedField(trowAwayConsumerCopy.Object, providerValue, parseFieldPath(fieldPath)...); err != nil {
-					return nil, fmt.Errorf("failed to set field %s in consumer: %w", fieldPath, err)
+				if err := unstructured.SetNestedField(consumer.Object, providerValue, parseFieldPath(fieldPath)...); err != nil {
+					return fmt.Errorf("failed to set field %s in consumer: %w", fieldPath, err)
 				}
 			}
 		}
@@ -88,47 +89,40 @@ func ShootToProvider(consumer, provider *unstructured.Unstructured) (*unstructur
 	}
 
 	// Add origin cluster annotation to preserve source cluster information
-	addLogicalClusterAnnotation(trowAwayConsumerCopy, provider)
+	addLogicalClusterAnnotation(consumer, provider)
 
 	// Copy spec from consumer to provider object
-	if spec, found, err := unstructured.NestedMap(trowAwayConsumerCopy.Object, "spec"); err != nil {
-		return nil, fmt.Errorf("failed to get spec from consumer object: %w", err)
+	if spec, found, err := unstructured.NestedMap(consumer.Object, "spec"); err != nil {
+		return fmt.Errorf("failed to get spec from consumer object: %w", err)
 	} else if found {
 		if err := unstructured.SetNestedMap(provider.Object, spec, "spec"); err != nil {
-			return nil, fmt.Errorf("failed to set spec in provider object: %w", err)
+			return fmt.Errorf("failed to set spec in provider object: %w", err)
 		}
 	}
 
-	return provider, nil
+	// Drop status from provider object to avoid noise
+	delete(provider.Object, "status")
+
+	return nil
 }
 
-func ShootToConsumer(provider, consumer *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+// ShootToConsumer mutates shoot object from provider to consumer format.
+// It modified object in place so caller should pass a copy of the original object if needed.
+func ShootToConsumer(provider, consumer *unstructured.Unstructured) error {
 	if consumer == nil {
-		return nil, fmt.Errorf("consumer object is nil")
+		return fmt.Errorf("consumer object is nil")
 	}
 
 	// Copy status from consumer to provider object
 	if status, found, err := unstructured.NestedMap(provider.Object, "status"); err != nil {
-		return nil, fmt.Errorf("failed to get spec from consumer object: %w", err)
+		return fmt.Errorf("failed to get spec from consumer object: %w", err)
 	} else if found {
 		if err := unstructured.SetNestedMap(consumer.Object, status, "status"); err != nil {
-			return nil, fmt.Errorf("failed to set spec in provider object: %w", err)
+			return fmt.Errorf("failed to set spec in provider object: %w", err)
 		}
 	}
 
-	// Copy certain spec fields from provider to consumer
-	for _, fieldPath := range preserveToProvider {
-		if providerValue, found, err := unstructured.NestedFieldCopy(provider.Object, parseFieldPath(fieldPath)...); err != nil {
-			return nil, fmt.Errorf("failed to get field %s from provider: %w", fieldPath, err)
-		} else if found {
-			// Copy provider field value back to consumer spec
-			if err := unstructured.SetNestedField(consumer.Object, providerValue, parseFieldPath(fieldPath)...); err != nil {
-				return nil, fmt.Errorf("failed to set field %s in consumer: %w", fieldPath, err)
-			}
-		}
-	}
-
-	return consumer, nil
+	return nil
 }
 
 // parseFieldPath converts a dot-separated field path to a slice of strings

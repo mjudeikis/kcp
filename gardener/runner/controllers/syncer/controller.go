@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/kcp-dev/kcp/gardener/runner/mutators"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
@@ -136,6 +137,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req mcreconcile.Request) (ct
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to get cluster: %w", err)
 	}
+
 	consumerClient := cl.GetClient()
 	providerClient := r.providerClient
 
@@ -148,6 +150,21 @@ func (r *Reconciler) Reconcile(ctx context.Context, req mcreconcile.Request) (ct
 		}
 		// Object not found, delete from provider if it exists
 		return r.deleteFromProvider(ctx, providerClient, req.NamespacedName)
+	}
+
+	if consumerObj.GetDeletionTimestamp() != nil {
+		// Object is being deleted, delete from provider
+		r, err := r.deleteFromProvider(ctx, providerClient, req.NamespacedName)
+		if err != nil {
+			return r, err
+		}
+		logger.Info("Object is being deleted, deleted from provider if existed")
+		consumerObj.SetFinalizers(nil)
+		if err := consumerClient.Update(ctx, consumerObj); err != nil {
+			return ctrl.Result{}, fmt.Errorf("failed to remove finalizer from consumer object: %w", err)
+		}
+
+		return ctrl.Result{}, nil
 	}
 
 	providerObj := &unstructured.Unstructured{}
@@ -166,10 +183,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req mcreconcile.Request) (ct
 	}
 
 	// Sync spec to provider
+	logger.Info("Sync spec to provider")
 	if err := r.syncToProvider(ctx, providerClient, consumerObj, providerObj); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to update spec to provider: %w", err)
 	}
 
+	logger.Info("Sync status from provider")
 	// Sync status back from provider
 	if err := r.syncFromProvider(ctx, consumerClient, consumerObj, providerObj); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to sync status from provider: %w", err)
@@ -187,8 +206,18 @@ func (r *Reconciler) syncToProvider(ctx context.Context, providerClient ctrlrunt
 	}
 
 	isCreate := providerObj == nil
+	var currentProviderObj *unstructured.Unstructured
+	if !isCreate {
+		currentProviderObj = providerObj.DeepCopy()
+	} else {
+		// Initialize a new provider object for creation
+		providerObj = &unstructured.Unstructured{}
+		providerObj.SetGroupVersionKind(consumerObj.GetObjectKind().GroupVersionKind())
+		providerObj.SetNamespace(consumerObj.GetNamespace())
+		providerObj.SetName(consumerObj.GetName())
+	}
 
-	providerObj, err = mutator.ToProvider(consumerObj, providerObj)
+	err = mutator.ToProvider(consumerObj, providerObj)
 	if err != nil {
 		return fmt.Errorf("failed to mutate object to provider format: %w", err)
 	}
@@ -199,6 +228,15 @@ func (r *Reconciler) syncToProvider(ctx context.Context, providerClient ctrlrunt
 		}
 		return nil
 	} else {
+
+		// Check diff to avoid unnecessary updates
+		logger := klog.FromContext(ctx)
+		logger.V(4).Info("Comparing provider object for spec update", "diff", cmp.Diff(currentProviderObj.Object["spec"], providerObj.Object["spec"]))
+		if cmp.Diff(currentProviderObj.Object["spec"], providerObj.Object["spec"]) == "" {
+			logger.V(4).Info("No spec changes detected, skipping update to provider")
+			return nil
+		}
+
 		if err := providerClient.Update(ctx, providerObj); err != nil {
 			return fmt.Errorf("failed to update object in provider: %w", err)
 		}
@@ -209,18 +247,29 @@ func (r *Reconciler) syncToProvider(ctx context.Context, providerClient ctrlrunt
 
 // syncStatusFromProvider syncs the object status back from the provider cluster.
 func (r *Reconciler) syncFromProvider(ctx context.Context, consumerClient ctrlruntimeclient.Client, consumerObj, providerObj *unstructured.Unstructured) error {
+	//logger := klog.FromContext(ctx)
 	// Mutate the object before syncing
 	mutator, err := mutators.GetMutator(r.gvk)
 	if err != nil {
 		return fmt.Errorf("failed to get mutator for GVK %s: %w", r.gvk.String(), err)
 	}
 
-	consumerObj, err = mutator.ToConsumer(providerObj, consumerObj)
+	currentConsumerObj := consumerObj.DeepCopy()
+
+	err = mutator.ToConsumer(providerObj, consumerObj)
 	if err != nil {
 		return fmt.Errorf("failed to mutate object to consumer format: %w", err)
 	}
 
-	err = consumerClient.Update(ctx, consumerObj)
+	// Check diff to avoid unnecessary updates
+	logger := klog.FromContext(ctx)
+	logger.V(4).Info("Comparing consumer object for status update", "diff", cmp.Diff(currentConsumerObj.Object["status"], consumerObj.Object["status"]))
+	if cmp.Diff(currentConsumerObj.Object["status"], consumerObj.Object["status"]) == "" {
+		logger.V(4).Info("No status changes detected, skipping update to consumer")
+		return nil
+	}
+
+	err = consumerClient.Update(ctx, consumerObj.DeepCopy())
 	if err != nil {
 		return fmt.Errorf("failed to update object in consumer: %w", err)
 	}
@@ -234,7 +283,40 @@ func (r *Reconciler) syncFromProvider(ctx context.Context, consumerClient ctrlru
 
 // deleteFromProvider deletes the object from the provider cluster.
 func (r *Reconciler) deleteFromProvider(ctx context.Context, providerClient ctrlruntimeclient.Client, namespacedName types.NamespacedName) (ctrl.Result, error) {
-	// TODO: Implement deletion logic as needed.
+	providerObj := &unstructured.Unstructured{}
+	providerObj.SetGroupVersionKind(r.gvk.GroupVersion().WithKind(r.gvk.Kind))
+	err := providerClient.Get(ctx, namespacedName, providerObj)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// Already deleted
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, fmt.Errorf("failed to get provider object for deletion: %w", err)
+	}
+	// Delete is 2 step process. Add annotation: confirmation.gardener.cloud/deletion=true to config, then delete.
+	// Witout the annotation, Gardener will not delete the object, even if deleteTimestamp is set.
+	if ann, ok := providerObj.GetAnnotations()["confirmation.gardener.cloud/deletion"]; !ok || ann != "true" {
+		if providerObj.GetAnnotations() == nil {
+			providerObj.SetAnnotations(map[string]string{})
+		}
+		ann := providerObj.GetAnnotations()
+		ann["confirmation.gardener.cloud/deletion"] = "true"
+		providerObj.SetAnnotations(ann)
+		if err := providerClient.Update(ctx, providerObj); err != nil {
+			return ctrl.Result{}, fmt.Errorf("failed to add deletion confirmation annotation: %w", err)
+		}
+		logger := klog.FromContext(ctx).WithValues("namespace", namespacedName.Namespace, "name", namespacedName.Name)
+		logger.Info("Added deletion confirmation annotation to provider object")
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
+	if err := providerClient.Delete(ctx, providerObj); err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed to delete provider object: %w", err)
+	}
+
+	logger := klog.FromContext(ctx).WithValues("namespace", namespacedName.Namespace, "name", namespacedName.Name)
+	logger.Info("Deleted object from provider cluster")
+
 	return ctrl.Result{}, nil
 }
 
@@ -243,9 +325,9 @@ func getTargetProviderCluster(obj *unstructured.Unstructured) string {
 	// Check for cluster preference in labels
 	ann := obj.GetAnnotations()
 	if ann != nil {
-		if cluster, exists := ann["syncer.kcp.io/target-cluster"]; exists {
+		if cluster, exists := ann[mutators.ConsumerClusterAnnotation]; exists {
 			return cluster
 		}
 	}
-	return "" // Empty
+	return "" // Empty - not our concern
 }
