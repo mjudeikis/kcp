@@ -153,12 +153,16 @@ func (s *Server) handleValidateShoot(w http.ResponseWriter, r *http.Request) {
 			allowed = false
 			message = "Object already exists"
 		} else {
-
+			obj.ManagedFields = nil // server side apply does not want this
+			obj.UID = ""            // server side apply does not want this
 			klog.V(4).Infof("Parsed object: %s", spew.Sdump(obj))
-			err = s.client.Create(r.Context(), obj, &client.CreateOptions{DryRun: []string{"All"}})
+			err = s.client.Patch(r.Context(), obj, client.Apply, &client.PatchOptions{
+				DryRun:       []string{"All"},
+				FieldManager: "gardener-webhook",
+			})
 			if err != nil {
 				allowed = false
-				message = fmt.Sprintf("Dynamic client create failed: %v", err)
+				message = fmt.Sprintf("Client create failed: %v", err)
 			}
 		}
 
@@ -232,48 +236,72 @@ func (s *Server) handleMutateShoot(w http.ResponseWriter, r *http.Request) {
 
 	klog.Infof("Received mutation request for %s/%s in namespace %s", req.Kind.Kind, req.Name, req.Namespace)
 
-	// Create admission response - always allow for now
+	// Create admission response
 	allowed := true
-	message := "Mutation passed - dummy webhook"
+	message := "Mutation passed"
+	var patches []byte
 
-	// You can add custom mutation logic here based on req.Object
+	// Process mutation logic
 	if req.Object.Raw != nil {
 		klog.V(4).Infof("Object data received: %s", string(req.Object.Raw))
 
-		// Example: Parse the object and perform mutation via proxy to provider cluster
-		var obj *v1beta1.Shoot
-		if err := json.Unmarshal(req.Object.Raw, &obj); err != nil {
+		// Parse the original object
+		var originalObj *v1beta1.Shoot
+		if err := json.Unmarshal(req.Object.Raw, &originalObj); err != nil {
 			allowed = false
 			message = fmt.Sprintf("Failed to parse object: %v", err)
 		} else {
-			// Check if object already exists - dry run on existing object passes
-			err := s.client.Get(r.Context(), client.ObjectKey{Namespace: obj.Namespace, Name: obj.Name}, obj)
+			// Create a copy for mutation
+			mutatedObj := originalObj.DeepCopy()
+
+			// Clear managedFields for server-side apply
+			mutatedObj.ManagedFields = nil
+
+			// Check if object already exists
+			err := s.client.Get(r.Context(), client.ObjectKey{Namespace: mutatedObj.Namespace, Name: mutatedObj.Name}, &v1beta1.Shoot{})
 			if err == nil {
 				allowed = false
 				message = "Object already exists"
 			} else {
-				klog.V(4).Infof("Parsed object: %s", spew.Sdump(obj))
-				err = s.client.Create(r.Context(), obj, &client.CreateOptions{DryRun: []string{"All"}})
+				klog.V(4).Infof("Performing dry run mutation on object: %s", spew.Sdump(mutatedObj))
+
+				// Perform server-side apply dry run to get the mutated object
+				err = s.client.Patch(r.Context(), mutatedObj, client.Apply, &client.PatchOptions{
+					DryRun:       []string{"All"},
+					FieldManager: "gardener-webhook",
+				})
 				if err != nil {
 					allowed = false
-					message = fmt.Sprintf("Dynamic client create failed: %v", err)
+					message = fmt.Sprintf("Server-side apply dry run failed: %v", err)
+				} else {
+					// Generate JSON patch between original and mutated object
+					patches, err = createJSONPatch(originalObj, mutatedObj)
+					if err != nil {
+						allowed = false
+						message = fmt.Sprintf("Failed to create JSON patch: %v", err)
+					} else {
+						message = "Mutation applied"
+					}
+
 				}
 			}
-
-			if allowed {
-				message = "Mutation passed - object accepted"
-			}
 		}
-		spew.Dump("Mutation response object", obj)
 	}
 
 	// Create the admission response
 	admissionResponse := &admissionv1.AdmissionResponse{
 		UID:     req.UID,
-		Allowed: true,
+		Allowed: allowed,
 		Result: &metav1.Status{
 			Message: message,
 		},
+	}
+
+	// Add patch if mutations were made
+	if allowed && len(patches) > 0 {
+		patchType := admissionv1.PatchTypeJSONPatch // only JSONPatch is supported by k/k
+		admissionResponse.Patch = patches
+		admissionResponse.PatchType = &patchType
 	}
 
 	// Create the admission review response
@@ -299,6 +327,93 @@ func (s *Server) handleMutateShoot(w http.ResponseWriter, r *http.Request) {
 		klog.Errorf("Error writing response: %v", err)
 	}
 
-	spew.Dump(string(respBytes))
-	klog.Infof("Sent mutation response: allowed=%v, message=%s", allowed, message)
+	if len(patches) > 0 {
+		klog.V(4).Infof("Applied patches: %s", string(patches))
+	}
+	klog.Infof("Sent mutation response: allowed=%v, message=%s, patches=%d bytes", allowed, message, len(patches))
+}
+
+func createJSONPatch(originalObj, mutatedObj *v1beta1.Shoot) ([]byte, error) {
+	originalJSON, err := json.Marshal(originalObj)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal original object: %w", err)
+	}
+
+	mutatedJSON, err := json.Marshal(mutatedObj)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal mutated object: %w", err)
+	}
+
+	var original, mutated map[string]any
+	json.Unmarshal(originalJSON, &original)
+	json.Unmarshal(mutatedJSON, &mutated)
+
+	patches := []map[string]any{}
+
+	// Recursively compare all fields
+	generatePatches(original, mutated, "", &patches)
+
+	return json.Marshal(patches)
+}
+
+var ignoreFields = map[string]struct{}{
+	"/metadata/managedFields":     {},
+	"/metadata/uid":               {},
+	"/metadata/resourceVersion":   {},
+	"/metadata/creationTimestamp": {},
+	"/metadata/annotations/extensions.gardener.cloud/processed-by": {},
+	"/metadata/annotations/gardener.cloud/created-by":              {},
+	"/metadata/annotations/shoot.gardener.cloud/tasks":             {},
+}
+
+func generatePatches(original, mutated map[string]any, basePath string, patches *[]map[string]any) {
+	// Check for additions and changes
+	for key, mutatedValue := range mutated {
+		if _, ignore := ignoreFields[basePath+"/"+key]; ignore {
+			continue
+		}
+		path := basePath + "/" + key
+		originalValue, exists := original[key]
+
+		if !exists {
+			// Field was added
+			*patches = append(*patches, map[string]any{
+				"op":    "add",
+				"path":  path,
+				"value": mutatedValue,
+			})
+		} else if !deepEqual(originalValue, mutatedValue) {
+			// Field was changed
+			if originalMap, ok := originalValue.(map[string]any); ok {
+				if mutatedMap, ok := mutatedValue.(map[string]any); ok {
+					// Recursively compare nested objects
+					generatePatches(originalMap, mutatedMap, path, patches)
+					continue
+				}
+			}
+
+			*patches = append(*patches, map[string]any{
+				"op":    "replace",
+				"path":  path,
+				"value": mutatedValue,
+			})
+		}
+	}
+
+	// Check for removals
+	for key := range original {
+		if _, exists := mutated[key]; !exists {
+			path := basePath + "/" + key
+			*patches = append(*patches, map[string]any{
+				"op":   "remove",
+				"path": path,
+			})
+		}
+	}
+}
+
+func deepEqual(a, b any) bool {
+	aJSON, _ := json.Marshal(a)
+	bJSON, _ := json.Marshal(b)
+	return string(aJSON) == string(bJSON)
 }
