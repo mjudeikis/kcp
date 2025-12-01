@@ -74,18 +74,16 @@ func TestShootToConsumer(t *testing.T) {
 	testData := loadTestData(t)
 
 	tests := []struct {
-		name        string
-		provider    *unstructured.Unstructured
-		consumer    *unstructured.Unstructured
-		expected    *unstructured.Unstructured
-		expectedErr string
+		name     string
+		provider *unstructured.Unstructured
+		consumer *unstructured.Unstructured
+		expected *unstructured.Unstructured
 	}{
 		{
-			name:        "nil consumer returns error",
-			provider:    &unstructured.Unstructured{},
-			consumer:    nil,
-			expected:    nil,
-			expectedErr: "consumer object is nil",
+			name:     "nil consumer returns error",
+			provider: &unstructured.Unstructured{},
+			consumer: nil,
+			expected: nil,
 		},
 		{
 			name: "copy status from provider to consumer",
@@ -272,17 +270,18 @@ func TestShootToConsumer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := ShootToConsumer(tt.provider, tt.consumer)
-
-			if tt.expectedErr != "" {
+			if tt.name == "nil consumer returns error" {
+				err := ShootToConsumer(tt.provider, tt.consumer)
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.expectedErr)
-				require.Nil(t, result)
+				require.Contains(t, err.Error(), "consumer object is nil")
 				return
 			}
 
+			// Make a copy of consumer to test in-place modification
+			consumerCopy := tt.consumer.DeepCopy()
+			err := ShootToConsumer(tt.provider, consumerCopy)
 			require.NoError(t, err)
-			require.Equal(t, tt.expected, result)
+			require.Equal(t, tt.expected, consumerCopy)
 		})
 	}
 }
@@ -294,10 +293,9 @@ func TestShootToConsumer_ErrorHandling(t *testing.T) {
 
 		consumer := createShootObject("test", "test", map[string]interface{}{}, nil, nil)
 
-		result, err := ShootToConsumer(provider, consumer)
+		err := ShootToConsumer(provider, consumer)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to get spec from consumer object")
-		require.Nil(t, result)
+		require.Contains(t, err.Error(), "failed to get status from provider")
 	})
 
 	t.Run("malformed consumer object during field copy", func(t *testing.T) {
@@ -308,10 +306,9 @@ func TestShootToConsumer_ErrorHandling(t *testing.T) {
 		consumer := createShootObject("test", "test", nil, nil, nil)
 		consumer.Object["metadata"] = "invalid-metadata-type" // Should be map, not string
 
-		result, err := ShootToConsumer(provider, consumer)
+		err := ShootToConsumer(provider, consumer)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to set field metadata.finalizers in consumer")
-		require.Nil(t, result)
+		require.Contains(t, err.Error(), "failed to set field")
 	})
 }
 

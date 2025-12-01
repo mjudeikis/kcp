@@ -2,7 +2,7 @@ apiVersion: apis.kcp.io/v1alpha1
 kind: APIResourceSchema
 metadata:
   creationTimestamp: null
-  name: v251117-7fb6557d0.shoots.core.gardener.cloud
+  name: v251128-fdd9f37cc.shoots.core.gardener.cloud
 spec:
   conversion:
     strategy: None
@@ -325,6 +325,11 @@ spec:
                       items:
                         type: string
                       type: array
+                    initialNodeGroupBackoffDuration:
+                      description: 'InitialNodeGroupBackoffDuration is the duration
+                        of first backoff after a new node failed to start (default:
+                        5m).'
+                      type: string
                     maxDrainParallelism:
                       description: 'MaxDrainParallelism specifies the maximum number
                         of nodes needing drain, that can be drained and deleted in
@@ -344,6 +349,11 @@ spec:
                         down a node (default: 600).'
                       format: int32
                       type: integer
+                    maxNodeGroupBackoffDuration:
+                      description: 'MaxNodeGroupBackoffDuration is the maximum backoff
+                        duration for a NodeGroup after new nodes failed to start (default:
+                        30m).'
+                      type: string
                     maxNodeProvisionTime:
                       description: 'MaxNodeProvisionTime defines how long CA waits
                         for node to be provisioned (default: 20 mins).'
@@ -359,6 +369,11 @@ spec:
                       description: 'NewPodScaleUpDelay specifies how long CA should
                         ignore newly created pods before they have to be considered
                         for scale-up (default: 0s).'
+                      type: string
+                    nodeGroupBackoffResetTimeout:
+                      description: 'NodeGroupBackoffResetTimeout is the time after
+                        last failed scale-up when the backoff duration is reset (default:
+                        3h).'
                       type: string
                     scaleDownDelayAfterAdd:
                       description: 'ScaleDownDelayAfterAdd defines how long after
@@ -1626,7 +1641,7 @@ spec:
                       controlPlane:
                         description: ControlPlane specifies that the shoot cluster
                           control plane components should be running in this worker
-                          pool. This is only relevant for autonomous shoot clusters.
+                          pool. This is only relevant for self-hosted shoot clusters.
                         properties:
                           backup:
                             description: Backup holds the object store configuration
@@ -2295,8 +2310,7 @@ spec:
                               type: string
                             timeAdded:
                               description: TimeAdded represents the time at which
-                                the taint was added. It is only written for NoExecute
-                                taints.
+                                the taint was added.
                               format: date-time
                               type: string
                             value:
@@ -2730,11 +2744,11 @@ spec:
                           items:
                             description: PendingWorkersRollout contains the name of
                               a worker pool and the initiation time of their last
-                              rollout due to credentials rotation.
+                              rollout.
                             properties:
                               lastInitiationTime:
                                 description: LastInitiationTime is the most recent
-                                  time when the credential rotation was initiated.
+                                  time when the worker rollout was initiated.
                                 format: date-time
                                 type: string
                               name:
@@ -2841,11 +2855,11 @@ spec:
                           items:
                             description: PendingWorkersRollout contains the name of
                               a worker pool and the initiation time of their last
-                              rollout due to credentials rotation.
+                              rollout.
                             properties:
                               lastInitiationTime:
                                 description: LastInitiationTime is the most recent
-                                  time when the credential rotation was initiated.
+                                  time when the worker rollout was initiated.
                                 format: date-time
                                 type: string
                               name:
@@ -3023,6 +3037,30 @@ spec:
               - progress
               - state
               - type
+              type: object
+            manualWorkerPoolRollout:
+              description: ManualWorkerPoolRollout contains information about the
+                worker pool rollout progress.
+              properties:
+                pendingWorkersRollouts:
+                  description: PendingWorkersRollouts contains the names of the worker
+                    pools that are still pending rollout.
+                  items:
+                    description: PendingWorkersRollout contains the name of a worker
+                      pool and the initiation time of their last rollout.
+                    properties:
+                      lastInitiationTime:
+                        description: LastInitiationTime is the most recent time when
+                          the worker rollout was initiated.
+                        format: date-time
+                        type: string
+                      name:
+                        description: Name is the name of a worker pool.
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  type: array
               type: object
             migrationStartTime:
               description: MigrationStartTime is the time when a migration to a different

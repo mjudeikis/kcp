@@ -10,8 +10,11 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 
+	predicateregistry "github.com/kcp-dev/kcp/gardener/runner/predicates"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -41,8 +44,10 @@ type Reconciler struct {
 	// consumerManager manages the source clusters, which is multicluster runtime enabled.
 	consumerManager mcmanager.Manager
 
-	gvk       schema.GroupVersionKind
-	agentName string
+	gvk schema.GroupVersionKind
+	// predicateRegistry registers or deregisters predicates for filtering objects for related GVRs controller.
+	// Once object is created in the provider, we register it as predicate and remove when deleted.
+	predicateRegistry predicateregistry.Registry
 }
 
 // Create creates a new controller with watches for source and provider clusters.
@@ -51,7 +56,7 @@ func Create(
 	providerManager manager.Manager,
 	consumerManager mcmanager.Manager,
 	gvk schema.GroupVersionKind,
-	agentName string,
+	predicateRegistry predicateregistry.Registry,
 	log klog.Logger,
 	numWorkers int,
 ) (mccontroller.Controller, error) {
@@ -64,10 +69,10 @@ func Create(
 
 	// Setup the reconciler
 	reconciler := &Reconciler{
-		providerClient:  providerManager.GetClient(),
-		consumerManager: consumerManager,
-		gvk:             gvk,
-		agentName:       agentName,
+		providerClient:    providerManager.GetClient(),
+		consumerManager:   consumerManager,
+		gvk:               gvk,
+		predicateRegistry: predicateRegistry,
 	}
 
 	ctrlOptions := mccontroller.Options{
@@ -114,11 +119,11 @@ func Create(
 	})
 
 	// Only watch source objects that we manage
-	nameFilter := predicate.NewTypedPredicateFuncs(func(u *unstructured.Unstructured) bool {
+	filter := predicate.NewTypedPredicateFuncs(func(u *unstructured.Unstructured) bool {
 		return true // Add filtering logic if needed
 	})
 
-	if err := c.Watch(source.TypedKind(providerManager.GetCache(), providerDummy, enqueueConsumerObjForProviderObj, nameFilter)); err != nil {
+	if err := c.Watch(source.TypedKind(providerManager.GetCache(), providerDummy, enqueueConsumerObjForProviderObj, filter)); err != nil {
 		return nil, err
 	}
 
@@ -226,6 +231,24 @@ func (r *Reconciler) syncToProvider(ctx context.Context, providerClient ctrlrunt
 		if err := providerClient.Create(ctx, providerObj); err != nil {
 			return fmt.Errorf("failed to create object in provider: %w", err)
 		}
+		// Provider object should be updated now as a pointer
+		owners := []metav1.OwnerReference{
+			{
+				APIVersion: r.gvk.GroupVersion().String(),
+				Kind:       r.gvk.Kind,
+				Name:       providerObj.GetName(),
+				UID:        providerObj.GetUID(),
+			},
+		}
+
+		r.predicateRegistry.AddOrUpdatePredicate(fmt.Sprintf("%s-%s-%s", r.gvk.Kind, providerObj.GetNamespace(), providerObj.GetName()), func(object *unstructured.Unstructured) bool {
+			owns, err := controllerutil.HasOwnerReference(owners, object, r.providerClient.Scheme())
+			if err != nil {
+				return false
+			}
+			return owns
+		})
+
 		return nil
 	} else {
 
@@ -236,6 +259,11 @@ func (r *Reconciler) syncToProvider(ctx context.Context, providerClient ctrlrunt
 			logger.V(4).Info("No spec changes detected, skipping update to provider")
 			return nil
 		}
+
+		logger.V(4).Info("Updating predicate for provider object", "name", fmt.Sprintf("%s-%s-%s", r.gvk.Kind, providerObj.GetNamespace(), providerObj.GetName()))
+		r.predicateRegistry.AddOrUpdatePredicate(fmt.Sprintf("%s-%s-%s", r.gvk.Kind, providerObj.GetNamespace(), providerObj.GetName()), func(object *unstructured.Unstructured) bool {
+			return metav1.IsControlledBy(object, providerObj)
+		})
 
 		if err := providerClient.Update(ctx, providerObj); err != nil {
 			return fmt.Errorf("failed to update object in provider: %w", err)
@@ -313,6 +341,23 @@ func (r *Reconciler) deleteFromProvider(ctx context.Context, providerClient ctrl
 	if err := providerClient.Delete(ctx, providerObj); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to delete provider object: %w", err)
 	}
+
+	owners := []metav1.OwnerReference{
+		{
+			APIVersion: r.gvk.GroupVersion().String(),
+			Kind:       r.gvk.Kind,
+			Name:       providerObj.GetName(),
+			UID:        providerObj.GetUID(),
+		},
+	}
+
+	r.predicateRegistry.DeletePredicate(fmt.Sprintf("%s-%s-%s", r.gvk.Kind, providerObj.GetNamespace(), providerObj.GetName()), func(object *unstructured.Unstructured) bool {
+		owns, err := controllerutil.HasOwnerReference(owners, object, r.providerClient.Scheme())
+		if err != nil {
+			return false
+		}
+		return owns
+	})
 
 	logger := klog.FromContext(ctx).WithValues("namespace", namespacedName.Namespace, "name", namespacedName.Name)
 	logger.Info("Deleted object from provider cluster")

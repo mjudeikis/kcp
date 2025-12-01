@@ -19,20 +19,22 @@ package runner
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/kcp-dev/kcp/gardener/runner/controllers/related"
 	"github.com/kcp-dev/kcp/gardener/runner/controllers/syncer"
+	"github.com/kcp-dev/kcp/gardener/runner/predicates"
 	"github.com/kcp-dev/kcp/gardener/runner/server"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	dynamicclient "k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/klog/v2"
-	mccontroller "sigs.k8s.io/multicluster-runtime/pkg/controller"
 )
 
 type Server struct {
 	Config *Config
 
 	WebhookServer *server.Server
-
-	SyncerController mccontroller.Controller
 }
 
 func NewServer(ctx context.Context, config *Config) (*Server, error) {
@@ -46,7 +48,24 @@ func NewServer(ctx context.Context, config *Config) (*Server, error) {
 	}
 	s.WebhookServer = webhookServer
 
-	// Controllers to do the actual syncing
+	// Controllers to do the actual syncing;
+
+	// relevant relatedGVK to sync from provider to consumer if they are owned by syncer objects.
+	relatedGVKs := []schema.GroupVersionKind{
+		{
+			Group:   "",
+			Version: "v1",
+			Kind:    "Secret",
+		},
+	}
+
+	shootGVK := schema.GroupVersionKind{
+		Group:   "core.gardener.cloud",
+		Version: "v1beta1",
+		Kind:    "Shoot",
+	}
+
+	predicatesRegistry := predicates.New()
 
 	// create the sync controller;
 	// use the reconciler's log without any additional reconciling context
@@ -56,21 +75,41 @@ func NewServer(ctx context.Context, config *Config) (*Server, error) {
 		ctx,
 		config.ProviderManager,
 		config.ConsumerManager,
-		schema.GroupVersionKind{
-			Group:   "core.gardener.cloud",
-			Version: "v1beta1",
-			Kind:    "Shoot",
-		},
-		"gardener-syncer",
+		shootGVK,
+		predicatesRegistry,
 		klog.FromContext(ctx),
 		1,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error creating Syncer controller: %w", err)
 	}
-	s.SyncerController = syncController
 
-	err = s.Config.ConsumerManager.Add(s.SyncerController)
+	dynamicProviderClient := dynamicclient.NewForConfigOrDie(config.ProviderClientConfig)
+	defaultProviderInf := dynamicinformer.NewDynamicSharedInformerFactory(dynamicProviderClient, time.Minute*30)
+
+	for _, gvk := range relatedGVKs {
+		klog.Infof("Syncer will sync related GVK: %s", gvk.String())
+		relatedSyncer, err := related.Create(
+			ctx,
+			config.ProviderManager,
+			config.ConsumerManager,
+			defaultProviderInf,
+			shootGVK,
+			gvk,
+			predicatesRegistry,
+			klog.FromContext(ctx),
+			1,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error creating Related Syncer controller for GVK %s: %w", gvk.String(), err)
+		}
+		err = config.ConsumerManager.Add(relatedSyncer)
+		if err != nil {
+			return nil, fmt.Errorf("error adding Related Syncer controller for GVK %s to ConsumerManager: %w", gvk.String(), err)
+		}
+	}
+
+	err = s.Config.ConsumerManager.Add(syncController)
 	if err != nil {
 		return nil, fmt.Errorf("error adding Syncer controller to ConsumerManager: %w", err)
 	}
