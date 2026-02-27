@@ -44,12 +44,12 @@ kubectl kcp ws root
 kubectl kcp ws create consumer --enter
 
 # 7. Create APIBinding in consumer
-# (get identity hash first from the APIExport)
-IDENTITY_HASH=$(kubectl --context root:provider get apiexport wildwest.dev -o jsonpath='{.status.identityHash}')
-sed "s/IDENTITY_HASH/$IDENTITY_HASH/" apibinding.yaml | kubectl apply -f -
+# The permissionClaim for tenancy.kcp.io/workspaces requires the same tenancy
+# identity hash that was used in apiexport.yaml (fetched in step 4).
+sed "s/TENANCY_IDENTITY_HASH/$TENANCY_HASH/" apibinding.yaml | kubectl apply -f -
 
 # 8. Get SA token from provider workspace
-kubectl kcp ws root:provider
+kubectl kcp ws :root:provider
 SA_TOKEN=$(kubectl create token provider-sa -n repro-ns)
 
 # 9. Get provider cluster ID
