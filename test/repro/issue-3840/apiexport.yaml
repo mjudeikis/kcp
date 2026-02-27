@@ -1,0 +1,21 @@
+apiVersion: apis.kcp.io/v1alpha2
+kind: APIExport
+metadata:
+  name: wildwest.dev
+spec:
+  resources:
+    - group: wildwest.dev
+      name: cowboys
+      schema: today.cowboys.wildwest.dev
+      storage:
+        crd: {}
+  permissionClaims:
+    - group: ""
+      resource: events
+      verbs: ["list", "watch", "get"]
+    - group: tenancy.kcp.io
+      resource: workspaces
+      # The identityHash must be filled from the root tenancy.kcp.io APIExport:
+      #   kubectl get apiexport tenancy.kcp.io -o jsonpath='{.status.identityHash}' --context root
+      identityHash: TENANCY_IDENTITY_HASH
+      verbs: ["get", "list", "watch"]
