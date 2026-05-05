@@ -1,0 +1,31 @@
+# WorkspaceType for application teams.
+# Creates APIBindings automatically for all platform tools.
+# Apply in: root:tenants
+apiVersion: tenancy.kcp.io/v1alpha1
+kind: WorkspaceType
+metadata:
+  name: application
+spec:
+  # Initializer controller bootstraps RBAC and default namespace
+  initializer: true
+  # Default APIBindings created in every new application workspace.
+  # Adjust this list based on which tools your platform offers.
+  defaultAPIBindings:
+    - path: root:platform-providers:argocd-provider
+      exportName: argocd.argoproj.io
+    - path: root:platform-providers:flux-provider
+      exportName: flux.toolkit.fluxcd.io
+    - path: root:platform-providers:crossplane-provider
+      exportName: crossplane.io
+    - path: root:platform-providers:kro-provider
+      exportName: kro.run
+    - path: root:platform-providers:argo-workflows-provider
+      exportName: workflows.argoproj.io
+  # Maintain: when platform team adds/removes default bindings,
+  # existing workspaces are updated automatically.
+  defaultAPIBindingLifecycle: Maintain
+  # Only allow application workspaces under organization-type workspaces
+  limitAllowedParents:
+    types:
+      - name: organization
+        path: root

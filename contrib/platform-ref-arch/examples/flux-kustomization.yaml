@@ -1,0 +1,31 @@
+# Example: Deploy using Flux GitOps from a kcp workspace.
+# Apply in: any application-type workspace (e.g., root:tenants:team-alpha)
+#
+# Prerequisites:
+# - Workspace has APIBinding to flux.toolkit.fluxcd.io
+# - api-syncagent running on physical cluster with Flux
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: podinfo
+  namespace: default
+spec:
+  interval: 5m
+  url: https://github.com/stefanprodan/podinfo
+  ref:
+    branch: master
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: podinfo
+  namespace: default
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: podinfo
+  path: ./kustomize
+  prune: true
+  timeout: 2m

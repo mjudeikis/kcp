@@ -1,0 +1,23 @@
+# APIExport for Crossplane resources.
+# Apply in: root:platform-providers:crossplane-provider
+#
+# NOTE: This is a skeleton. Actual resources depend on which XRDs
+# the platform team defines. Each XRD claim type needs:
+# 1. An APIResourceSchema generated from the claim CRD
+# 2. A resource entry in this APIExport
+#
+# Use the CRD Discovery Controller to automate this.
+apiVersion: apis.kcp.io/v1alpha2
+kind: APIExport
+metadata:
+  name: crossplane.io
+spec:
+  resources: []
+  # Crossplane needs to create connection details Secrets in consumer workspaces
+  permissionClaims:
+    - group: ""
+      resource: secrets
+      verbs: ["get", "list", "watch", "create", "update"]
+    - group: ""
+      resource: configmaps
+      verbs: ["get", "list", "watch"]

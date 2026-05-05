@@ -1,0 +1,63 @@
+# PublishedResource configs for Argo Workflows.
+# Apply on: physical cluster running Argo Workflows + api-syncagent
+---
+apiVersion: syncagent.kcp.io/v1alpha1
+kind: PublishedResource
+metadata:
+  name: argo-workflows
+spec:
+  resource:
+    apiGroup: argoproj.io
+    version: v1alpha1
+    resource: workflows
+  naming:
+    namespace: "{{ .ClusterName }}"
+    name: "{{ .Object.metadata.name }}"
+  mutation:
+    status:
+      # Trim large internal fields to reduce sync payload
+      - delete:
+          path: ".status.compressedNodes"
+      - delete:
+          path: ".status.resourcesDuration"
+  related:
+    - identifier: workflow-params
+      kind: ConfigMap
+      origin: kcp
+      object:
+        selector:
+          matchLabels:
+            workflows.argoproj.io/configmap-type: parameter
+    - identifier: workflow-credentials
+      kind: Secret
+      origin: kcp
+      object:
+        selector:
+          matchLabels:
+            workflows.argoproj.io/secret-type: credentials
+---
+apiVersion: syncagent.kcp.io/v1alpha1
+kind: PublishedResource
+metadata:
+  name: argo-workflowtemplates
+spec:
+  resource:
+    apiGroup: argoproj.io
+    version: v1alpha1
+    resource: workflowtemplates
+  naming:
+    namespace: "{{ .ClusterName }}"
+    name: "{{ .Object.metadata.name }}"
+---
+apiVersion: syncagent.kcp.io/v1alpha1
+kind: PublishedResource
+metadata:
+  name: argo-cronworkflows
+spec:
+  resource:
+    apiGroup: argoproj.io
+    version: v1alpha1
+    resource: cronworkflows
+  naming:
+    namespace: "{{ .ClusterName }}"
+    name: "{{ .Object.metadata.name }}"

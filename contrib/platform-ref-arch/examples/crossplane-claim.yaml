@@ -1,0 +1,24 @@
+# Example: Provision a database using Crossplane from a kcp workspace.
+# Apply in: any application-type workspace (e.g., root:tenants:team-alpha)
+#
+# Prerequisites:
+# - Workspace has APIBinding to crossplane.io
+# - Platform team has created the Database XRD and Composition
+# - api-syncagent running on physical cluster with Crossplane
+# - CRD Discovery Controller has synced the Database CRD to kcp
+#
+# NOTE: The exact schema depends on the platform team's XRD definition.
+# This is an illustrative example.
+---
+apiVersion: example.org/v1alpha1
+kind: Database
+metadata:
+  name: my-app-db
+  namespace: default
+spec:
+  engine: postgresql
+  engineVersion: "15"
+  storageGB: 20
+  # Connection details will be written to this Secret
+  writeConnectionSecretToRef:
+    name: my-app-db-conn

@@ -1,0 +1,23 @@
+# Example: Run an Argo Workflow from a kcp workspace.
+# Apply in: any application-type workspace (e.g., root:tenants:team-alpha)
+#
+# Prerequisites:
+# - Workspace has APIBinding to workflows.argoproj.io
+# - api-syncagent running on physical cluster with Argo Workflows
+#
+# NOTE: Pod logs/exec are not available through kcp (requires Gap 2).
+# Workflow status (phase, step outcomes) IS synced back.
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: hello-world
+  namespace: default
+spec:
+  entrypoint: say-hello
+  templates:
+    - name: say-hello
+      container:
+        image: alpine:3.18
+        command: [echo]
+        args: ["Hello from kcp workspace!"]

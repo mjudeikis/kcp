@@ -1,0 +1,30 @@
+# APIExport for Argo Workflows resources.
+# Apply in: root:platform-providers:argo-workflows-provider
+apiVersion: apis.kcp.io/v1alpha2
+kind: APIExport
+metadata:
+  name: workflows.argoproj.io
+spec:
+  resources:
+    - group: argoproj.io
+      name: workflows
+      schema: v1alpha1.workflows.argoproj.io
+      storage:
+        crd: {}
+    - group: argoproj.io
+      name: workflowtemplates
+      schema: v1alpha1.workflowtemplates.argoproj.io
+      storage:
+        crd: {}
+    - group: argoproj.io
+      name: cronworkflows
+      schema: v1alpha1.cronworkflows.argoproj.io
+      storage:
+        crd: {}
+  permissionClaims:
+    - group: ""
+      resource: secrets
+      verbs: ["get", "list", "watch"]
+    - group: ""
+      resource: configmaps
+      verbs: ["get", "list", "watch"]

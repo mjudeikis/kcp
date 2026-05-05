@@ -1,0 +1,22 @@
+# APIExport for KRO resources.
+# Apply in: root:platform-providers:kro-provider
+#
+# NOTE: This is a skeleton. Actual resources depend on which ResourceGroups
+# the platform team defines. Each ResourceGroup generates a CRD that needs:
+# 1. An APIResourceSchema generated from the instance CRD
+# 2. A resource entry in this APIExport
+#
+# Use the CRD Discovery Controller to automate this.
+apiVersion: apis.kcp.io/v1alpha2
+kind: APIExport
+metadata:
+  name: kro.run
+spec:
+  resources: []
+  permissionClaims:
+    - group: ""
+      resource: secrets
+      verbs: ["get", "list", "watch"]
+    - group: ""
+      resource: configmaps
+      verbs: ["get", "list", "watch"]

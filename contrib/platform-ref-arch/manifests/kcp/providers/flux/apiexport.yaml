@@ -1,0 +1,40 @@
+# APIExport for Flux resources.
+# Apply in: root:platform-providers:flux-provider
+apiVersion: apis.kcp.io/v1alpha2
+kind: APIExport
+metadata:
+  name: flux.toolkit.fluxcd.io
+spec:
+  resources:
+    - group: source.toolkit.fluxcd.io
+      name: gitrepositories
+      schema: v1.gitrepositories.source.toolkit.fluxcd.io
+      storage:
+        crd: {}
+    - group: source.toolkit.fluxcd.io
+      name: helmrepositories
+      schema: v1.helmrepositories.source.toolkit.fluxcd.io
+      storage:
+        crd: {}
+    - group: source.toolkit.fluxcd.io
+      name: ocirepositories
+      schema: v1beta2.ocirepositories.source.toolkit.fluxcd.io
+      storage:
+        crd: {}
+    - group: kustomize.toolkit.fluxcd.io
+      name: kustomizations
+      schema: v1.kustomizations.kustomize.toolkit.fluxcd.io
+      storage:
+        crd: {}
+    - group: helm.toolkit.fluxcd.io
+      name: helmreleases
+      schema: v2.helmreleases.helm.toolkit.fluxcd.io
+      storage:
+        crd: {}
+  permissionClaims:
+    - group: ""
+      resource: secrets
+      verbs: ["get", "list", "watch"]
+    - group: ""
+      resource: configmaps
+      verbs: ["get", "list", "watch"]

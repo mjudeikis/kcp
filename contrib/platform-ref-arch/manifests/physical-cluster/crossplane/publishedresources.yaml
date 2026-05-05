@@ -1,0 +1,44 @@
+# PublishedResource configs for Crossplane.
+# Apply on: physical cluster running Crossplane + api-syncagent
+#
+# NOTE: This is an EXAMPLE for a hypothetical "Database" claim type.
+# In production, each XRD claim type needs its own PublishedResource.
+# Use the CRD Discovery Controller to automate creation.
+#
+# When the platform team creates an XRD like:
+#   apiVersion: apiextensions.crossplane.io/v1
+#   kind: CompositeResourceDefinition
+#   metadata:
+#     name: xdatabases.example.org
+#   spec:
+#     claimNames:
+#       kind: Database
+#       plural: databases
+#     ...
+#
+# Crossplane generates a CRD: databases.example.org
+# A PublishedResource must be created for that CRD:
+---
+apiVersion: syncagent.kcp.io/v1alpha1
+kind: PublishedResource
+metadata:
+  name: crossplane-databases
+spec:
+  resource:
+    apiGroup: example.org
+    version: v1alpha1
+    resource: databases
+  naming:
+    namespace: "{{ .ClusterName }}"
+    name: "{{ .Object.metadata.name }}"
+  # Crossplane publishes connection details as a Secret
+  related:
+    - identifier: connection-details
+      kind: Secret
+      origin: service
+      object:
+        reference:
+          path: ".spec.writeConnectionSecretToRef.name"
+        namespace:
+          reference:
+            path: ".spec.writeConnectionSecretToRef.namespace"

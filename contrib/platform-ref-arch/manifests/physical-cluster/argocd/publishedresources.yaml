@@ -1,0 +1,60 @@
+# PublishedResource configs for ArgoCD.
+# Apply on: physical cluster running ArgoCD + api-syncagent
+---
+apiVersion: syncagent.kcp.io/v1alpha1
+kind: PublishedResource
+metadata:
+  name: argocd-applications
+spec:
+  resource:
+    apiGroup: argoproj.io
+    version: v1alpha1
+    resource: applications
+  # Namespace mapping: each kcp workspace maps to a namespace
+  # using the kcp cluster name (default behavior)
+  naming:
+    namespace: "{{ .ClusterName }}"
+    name: "{{ .Object.metadata.name }}"
+  mutation:
+    spec:
+      # Rewrite destination server to point to the local cluster.
+      # Users don't know the physical cluster address.
+      - template:
+          path: ".spec.destination.server"
+          template: "https://kubernetes.default.svc"
+    status: []
+  # Sync Git credentials and config from kcp workspace
+  related:
+    - identifier: git-credentials
+      kind: Secret
+      origin: kcp
+      object:
+        selector:
+          matchLabels:
+            argocd.argoproj.io/secret-type: repository
+---
+apiVersion: syncagent.kcp.io/v1alpha1
+kind: PublishedResource
+metadata:
+  name: argocd-appprojects
+spec:
+  resource:
+    apiGroup: argoproj.io
+    version: v1alpha1
+    resource: appprojects
+  naming:
+    namespace: "{{ .ClusterName }}"
+    name: "{{ .Object.metadata.name }}"
+---
+apiVersion: syncagent.kcp.io/v1alpha1
+kind: PublishedResource
+metadata:
+  name: argocd-applicationsets
+spec:
+  resource:
+    apiGroup: argoproj.io
+    version: v1alpha1
+    resource: applicationsets
+  naming:
+    namespace: "{{ .ClusterName }}"
+    name: "{{ .Object.metadata.name }}"

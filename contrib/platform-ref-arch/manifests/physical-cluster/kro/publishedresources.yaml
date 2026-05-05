@@ -1,0 +1,34 @@
+# PublishedResource configs for KRO.
+# Apply on: physical cluster running KRO + api-syncagent
+#
+# NOTE: This is an EXAMPLE for a hypothetical "WebApp" instance type.
+# In production, each ResourceGroup generates an instance CRD that needs
+# its own PublishedResource.
+# Use the CRD Discovery Controller to automate creation.
+#
+# When the platform team creates a ResourceGroup:
+#   apiVersion: kro.run/v1alpha1
+#   kind: ResourceGroup
+#   metadata:
+#     name: webapp
+#   spec:
+#     schema:
+#       apiVersion: v1alpha1
+#       kind: WebApp
+#       ...
+#
+# KRO generates a CRD: webapps.kro.run
+# A PublishedResource must be created for that CRD:
+---
+apiVersion: syncagent.kcp.io/v1alpha1
+kind: PublishedResource
+metadata:
+  name: kro-webapps
+spec:
+  resource:
+    apiGroup: kro.run
+    version: v1alpha1
+    resource: webapps
+  naming:
+    namespace: "{{ .ClusterName }}"
+    name: "{{ .Object.metadata.name }}"

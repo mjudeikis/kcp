@@ -1,0 +1,32 @@
+# APIExport for ArgoCD resources.
+# Apply in: root:platform-providers:argocd-provider
+apiVersion: apis.kcp.io/v1alpha2
+kind: APIExport
+metadata:
+  name: argocd.argoproj.io
+spec:
+  resources:
+    - group: argoproj.io
+      name: applications
+      schema: v1alpha1.applications.argoproj.io
+      storage:
+        crd: {}
+    - group: argoproj.io
+      name: appprojects
+      schema: v1alpha1.appprojects.argoproj.io
+      storage:
+        crd: {}
+    - group: argoproj.io
+      name: applicationsets
+      schema: v1alpha1.applicationsets.argoproj.io
+      storage:
+        crd: {}
+  # Permission claims: resources the api-syncagent needs to read
+  # from consumer workspaces (e.g., Git credentials stored as Secrets)
+  permissionClaims:
+    - group: ""
+      resource: secrets
+      verbs: ["get", "list", "watch"]
+    - group: ""
+      resource: configmaps
+      verbs: ["get", "list", "watch"]

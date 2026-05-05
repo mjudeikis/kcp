@@ -1,0 +1,42 @@
+# Example: Deploy an application using ArgoCD from a kcp workspace.
+# Apply in: any application-type workspace (e.g., root:tenants:team-alpha)
+#
+# Prerequisites:
+# - Workspace has APIBinding to argocd.argoproj.io
+# - api-syncagent running on physical cluster with ArgoCD
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: default
+  namespace: default
+spec:
+  description: Default project
+  sourceRepos:
+    - '*'
+  destinations:
+    - namespace: '*'
+      server: '*'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: guestbook
+  namespace: default
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/argoproj/argocd-example-apps.git
+    targetRevision: HEAD
+    path: guestbook
+  destination:
+    # This gets rewritten by api-syncagent to the local cluster
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

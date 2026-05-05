@@ -1,0 +1,106 @@
+# PublishedResource configs for Flux.
+# Apply on: physical cluster running Flux + api-syncagent
+---
+apiVersion: syncagent.kcp.io/v1alpha1
+kind: PublishedResource
+metadata:
+  name: flux-gitrepositories
+spec:
+  resource:
+    apiGroup: source.toolkit.fluxcd.io
+    version: v1
+    resource: gitrepositories
+  naming:
+    namespace: "{{ .ClusterName }}"
+    name: "{{ .Object.metadata.name }}"
+  related:
+    - identifier: git-credentials
+      kind: Secret
+      origin: kcp
+      object:
+        reference:
+          path: ".spec.secretRef.name"
+---
+apiVersion: syncagent.kcp.io/v1alpha1
+kind: PublishedResource
+metadata:
+  name: flux-helmrepositories
+spec:
+  resource:
+    apiGroup: source.toolkit.fluxcd.io
+    version: v1
+    resource: helmrepositories
+  naming:
+    namespace: "{{ .ClusterName }}"
+    name: "{{ .Object.metadata.name }}"
+  related:
+    - identifier: helm-credentials
+      kind: Secret
+      origin: kcp
+      object:
+        reference:
+          path: ".spec.secretRef.name"
+---
+apiVersion: syncagent.kcp.io/v1alpha1
+kind: PublishedResource
+metadata:
+  name: flux-ocirepositories
+spec:
+  resource:
+    apiGroup: source.toolkit.fluxcd.io
+    version: v1beta2
+    resource: ocirepositories
+  naming:
+    namespace: "{{ .ClusterName }}"
+    name: "{{ .Object.metadata.name }}"
+---
+apiVersion: syncagent.kcp.io/v1alpha1
+kind: PublishedResource
+metadata:
+  name: flux-kustomizations
+spec:
+  resource:
+    apiGroup: kustomize.toolkit.fluxcd.io
+    version: v1
+    resource: kustomizations
+  naming:
+    namespace: "{{ .ClusterName }}"
+    name: "{{ .Object.metadata.name }}"
+  # NOTE: Kustomization references GitRepository/OCIRepository via
+  # spec.sourceRef. This is a cross-CRD reference that requires Gap 1
+  # (cross-CRD reference sync) to be resolved. Without it, the source
+  # object must be synced independently via its own PublishedResource.
+  mutation:
+    spec:
+      # Lock target namespace to the tenant's namespace
+      - template:
+          path: ".spec.targetNamespace"
+          template: "{{ .ClusterName }}"
+---
+apiVersion: syncagent.kcp.io/v1alpha1
+kind: PublishedResource
+metadata:
+  name: flux-helmreleases
+spec:
+  resource:
+    apiGroup: helm.toolkit.fluxcd.io
+    version: v2
+    resource: helmreleases
+  naming:
+    namespace: "{{ .ClusterName }}"
+    name: "{{ .Object.metadata.name }}"
+  # NOTE: HelmRelease references HelmRepository via spec.chart.spec.sourceRef.
+  # Same cross-CRD reference gap as Kustomization.
+  related:
+    - identifier: helm-values
+      kind: ConfigMap
+      origin: kcp
+      object:
+        reference:
+          path: ".spec.valuesFrom[0].name"
+    - identifier: helm-values-secret
+      kind: Secret
+      origin: kcp
+      object:
+        reference:
+          path: ".spec.valuesFrom[0].name"
