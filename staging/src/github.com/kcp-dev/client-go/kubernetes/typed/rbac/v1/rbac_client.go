@@ -32,6 +32,7 @@ import (
 
 type RbacV1ClusterInterface interface {
 	RbacV1ClusterScoper
+	RbacV1ClusterEvictor
 	ClusterRolesClusterGetter
 	ClusterRoleBindingsClusterGetter
 	RolesClusterGetter
@@ -40,6 +41,10 @@ type RbacV1ClusterInterface interface {
 
 type RbacV1ClusterScoper interface {
 	Cluster(logicalcluster.Path) rbacv1.RbacV1Interface
+}
+
+type RbacV1ClusterEvictor interface {
+	Evict(logicalcluster.Path)
 }
 
 // RbacV1ClusterClient is used to interact with features provided by the rbac.authorization.k8s.io group.
@@ -52,6 +57,13 @@ func (c *RbacV1ClusterClient) Cluster(clusterPath logicalcluster.Path) rbacv1.Rb
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *RbacV1ClusterClient) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
 }
 
 func (c *RbacV1ClusterClient) ClusterRoles() ClusterRoleClusterInterface {

@@ -21,17 +21,17 @@ package v1alpha1
 import (
 	http "net/http"
 
-	rest "k8s.io/client-go/rest"
-
 	kcpclient "github.com/kcp-dev/apimachinery/v2/pkg/client"
 	"github.com/kcp-dev/logicalcluster/v3"
 	kcptenancyv1alpha1 "github.com/kcp-dev/sdk/apis/tenancy/v1alpha1"
 	kcpscheme "github.com/kcp-dev/sdk/client/clientset/versioned/cluster/scheme"
 	kcpv1alpha1 "github.com/kcp-dev/sdk/client/clientset/versioned/typed/tenancy/v1alpha1"
+	rest "k8s.io/client-go/rest"
 )
 
 type TenancyV1alpha1ClusterInterface interface {
 	TenancyV1alpha1ClusterScoper
+	TenancyV1alpha1ClusterEvictor
 	WorkspacesClusterGetter
 	WorkspaceAuthenticationConfigurationsClusterGetter
 	WorkspaceTypesClusterGetter
@@ -39,6 +39,10 @@ type TenancyV1alpha1ClusterInterface interface {
 
 type TenancyV1alpha1ClusterScoper interface {
 	Cluster(logicalcluster.Path) kcpv1alpha1.TenancyV1alpha1Interface
+}
+
+type TenancyV1alpha1ClusterEvictor interface {
+	Evict(logicalcluster.Path)
 }
 
 // TenancyV1alpha1ClusterClient is used to interact with features provided by the tenancy.kcp.io group.
@@ -51,6 +55,13 @@ func (c *TenancyV1alpha1ClusterClient) Cluster(clusterPath logicalcluster.Path) 
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *TenancyV1alpha1ClusterClient) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
 }
 
 func (c *TenancyV1alpha1ClusterClient) Workspaces() WorkspaceClusterInterface {

@@ -19,9 +19,6 @@ limitations under the License.
 package fake
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/discovery"
-
 	kcpfakediscovery "github.com/kcp-dev/client-go/third_party/k8s.io/client-go/discovery/fake"
 	kcptesting "github.com/kcp-dev/client-go/third_party/k8s.io/client-go/testing"
 	"github.com/kcp-dev/logicalcluster/v3"
@@ -47,6 +44,8 @@ import (
 	corev1alpha1 "github.com/kcp-dev/sdk/client/clientset/versioned/typed/core/v1alpha1"
 	tenancyv1alpha1 "github.com/kcp-dev/sdk/client/clientset/versioned/typed/tenancy/v1alpha1"
 	topologyv1alpha1 "github.com/kcp-dev/sdk/client/clientset/versioned/typed/topology/v1alpha1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/discovery"
 )
 
 // NewSimpleClientset returns a clientset that will respond with the provided objects.
@@ -121,6 +120,9 @@ func (c *ClusterClientset) Cluster(clusterPath logicalcluster.Path) clientset.In
 		clusterPath: clusterPath,
 	}
 }
+
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *ClusterClientset) Evict(clusterPath logicalcluster.Path) {}
 
 // ApisV1alpha1 retrieves the ApisV1alpha1ClusterClient
 func (c *ClusterClientset) ApisV1alpha1() kcpapisv1alpha1.ApisV1alpha1ClusterInterface {

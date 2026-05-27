@@ -40,6 +40,9 @@ func (c *ResourceV1beta1ClusterClient) Cluster(clusterPath logicalcluster.Path) 
 	return &ResourceV1beta1Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *ResourceV1beta1ClusterClient) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *ResourceV1beta1ClusterClient) DeviceClasses() kcpresourcev1beta1.DeviceClassClusterInterface {
 	return newFakeDeviceClassClusterClient(c)
 }

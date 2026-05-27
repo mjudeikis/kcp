@@ -32,6 +32,7 @@ import (
 
 type AdmissionregistrationV1beta1ClusterInterface interface {
 	AdmissionregistrationV1beta1ClusterScoper
+	AdmissionregistrationV1beta1ClusterEvictor
 	MutatingAdmissionPoliciesClusterGetter
 	MutatingAdmissionPolicyBindingsClusterGetter
 	MutatingWebhookConfigurationsClusterGetter
@@ -44,6 +45,10 @@ type AdmissionregistrationV1beta1ClusterScoper interface {
 	Cluster(logicalcluster.Path) admissionregistrationv1beta1.AdmissionregistrationV1beta1Interface
 }
 
+type AdmissionregistrationV1beta1ClusterEvictor interface {
+	Evict(logicalcluster.Path)
+}
+
 // AdmissionregistrationV1beta1ClusterClient is used to interact with features provided by the admissionregistration.k8s.io group.
 type AdmissionregistrationV1beta1ClusterClient struct {
 	clientCache kcpclient.Cache[*admissionregistrationv1beta1.AdmissionregistrationV1beta1Client]
@@ -54,6 +59,13 @@ func (c *AdmissionregistrationV1beta1ClusterClient) Cluster(clusterPath logicalc
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *AdmissionregistrationV1beta1ClusterClient) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
 }
 
 func (c *AdmissionregistrationV1beta1ClusterClient) MutatingAdmissionPolicies() MutatingAdmissionPolicyClusterInterface {

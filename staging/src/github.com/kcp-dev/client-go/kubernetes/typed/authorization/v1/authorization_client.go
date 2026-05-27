@@ -32,6 +32,7 @@ import (
 
 type AuthorizationV1ClusterInterface interface {
 	AuthorizationV1ClusterScoper
+	AuthorizationV1ClusterEvictor
 	LocalSubjectAccessReviewsClusterGetter
 	SelfSubjectAccessReviewsClusterGetter
 	SelfSubjectRulesReviewsClusterGetter
@@ -40,6 +41,10 @@ type AuthorizationV1ClusterInterface interface {
 
 type AuthorizationV1ClusterScoper interface {
 	Cluster(logicalcluster.Path) authorizationv1.AuthorizationV1Interface
+}
+
+type AuthorizationV1ClusterEvictor interface {
+	Evict(logicalcluster.Path)
 }
 
 // AuthorizationV1ClusterClient is used to interact with features provided by the authorization.k8s.io group.
@@ -52,6 +57,13 @@ func (c *AuthorizationV1ClusterClient) Cluster(clusterPath logicalcluster.Path) 
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *AuthorizationV1ClusterClient) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
 }
 
 func (c *AuthorizationV1ClusterClient) LocalSubjectAccessReviews() LocalSubjectAccessReviewClusterInterface {

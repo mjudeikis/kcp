@@ -40,6 +40,9 @@ func (c *AutoscalingV1ClusterClient) Cluster(clusterPath logicalcluster.Path) au
 	return &AutoscalingV1Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *AutoscalingV1ClusterClient) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *AutoscalingV1ClusterClient) HorizontalPodAutoscalers() kcpautoscalingv1.HorizontalPodAutoscalerClusterInterface {
 	return newFakeHorizontalPodAutoscalerClusterClient(c)
 }

@@ -40,6 +40,9 @@ func (c *StorageV1alpha1ClusterClient) Cluster(clusterPath logicalcluster.Path) 
 	return &StorageV1alpha1Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *StorageV1alpha1ClusterClient) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *StorageV1alpha1ClusterClient) CSIStorageCapacities() kcpstoragev1alpha1.CSIStorageCapacityClusterInterface {
 	return newFakeCSIStorageCapacityClusterClient(c)
 }

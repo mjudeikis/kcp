@@ -40,6 +40,9 @@ func (c *CertificatesV1alpha1ClusterClient) Cluster(clusterPath logicalcluster.P
 	return &CertificatesV1alpha1Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *CertificatesV1alpha1ClusterClient) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *CertificatesV1alpha1ClusterClient) ClusterTrustBundles() kcpcertificatesv1alpha1.ClusterTrustBundleClusterInterface {
 	return newFakeClusterTrustBundleClusterClient(c)
 }

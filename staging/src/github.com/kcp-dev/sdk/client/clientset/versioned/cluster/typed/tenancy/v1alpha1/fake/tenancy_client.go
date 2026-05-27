@@ -19,12 +19,11 @@ limitations under the License.
 package fake
 
 import (
-	rest "k8s.io/client-go/rest"
-
 	kcptesting "github.com/kcp-dev/client-go/third_party/k8s.io/client-go/testing"
 	"github.com/kcp-dev/logicalcluster/v3"
 	kcptenancyv1alpha1 "github.com/kcp-dev/sdk/client/clientset/versioned/cluster/typed/tenancy/v1alpha1"
 	tenancyv1alpha1 "github.com/kcp-dev/sdk/client/clientset/versioned/typed/tenancy/v1alpha1"
+	rest "k8s.io/client-go/rest"
 )
 
 var _ kcptenancyv1alpha1.TenancyV1alpha1ClusterInterface = (*TenancyV1alpha1ClusterClient)(nil)
@@ -39,6 +38,9 @@ func (c *TenancyV1alpha1ClusterClient) Cluster(clusterPath logicalcluster.Path) 
 	}
 	return &TenancyV1alpha1Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
+
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *TenancyV1alpha1ClusterClient) Evict(clusterPath logicalcluster.Path) {}
 
 func (c *TenancyV1alpha1ClusterClient) Workspaces() kcptenancyv1alpha1.WorkspaceClusterInterface {
 	return newFakeWorkspaceClusterClient(c)

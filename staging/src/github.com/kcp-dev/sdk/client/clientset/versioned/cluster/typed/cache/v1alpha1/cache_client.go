@@ -21,23 +21,27 @@ package v1alpha1
 import (
 	http "net/http"
 
-	rest "k8s.io/client-go/rest"
-
 	kcpclient "github.com/kcp-dev/apimachinery/v2/pkg/client"
 	"github.com/kcp-dev/logicalcluster/v3"
 	kcpcachev1alpha1 "github.com/kcp-dev/sdk/apis/cache/v1alpha1"
 	kcpscheme "github.com/kcp-dev/sdk/client/clientset/versioned/cluster/scheme"
 	kcpv1alpha1 "github.com/kcp-dev/sdk/client/clientset/versioned/typed/cache/v1alpha1"
+	rest "k8s.io/client-go/rest"
 )
 
 type CacheV1alpha1ClusterInterface interface {
 	CacheV1alpha1ClusterScoper
+	CacheV1alpha1ClusterEvictor
 	CachedResourcesClusterGetter
 	CachedResourceEndpointSlicesClusterGetter
 }
 
 type CacheV1alpha1ClusterScoper interface {
 	Cluster(logicalcluster.Path) kcpv1alpha1.CacheV1alpha1Interface
+}
+
+type CacheV1alpha1ClusterEvictor interface {
+	Evict(logicalcluster.Path)
 }
 
 // CacheV1alpha1ClusterClient is used to interact with features provided by the cache.kcp.io group.
@@ -50,6 +54,13 @@ func (c *CacheV1alpha1ClusterClient) Cluster(clusterPath logicalcluster.Path) kc
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *CacheV1alpha1ClusterClient) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
 }
 
 func (c *CacheV1alpha1ClusterClient) CachedResources() CachedResourceClusterInterface {

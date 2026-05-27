@@ -40,6 +40,9 @@ func (c *EventsV1ClusterClient) Cluster(clusterPath logicalcluster.Path) eventsv
 	return &EventsV1Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *EventsV1ClusterClient) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *EventsV1ClusterClient) Events() kcpeventsv1.EventClusterInterface {
 	return newFakeEventClusterClient(c)
 }

@@ -40,6 +40,9 @@ func (c *FlowcontrolV1beta1ClusterClient) Cluster(clusterPath logicalcluster.Pat
 	return &FlowcontrolV1beta1Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *FlowcontrolV1beta1ClusterClient) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *FlowcontrolV1beta1ClusterClient) FlowSchemas() kcpflowcontrolv1beta1.FlowSchemaClusterInterface {
 	return newFakeFlowSchemaClusterClient(c)
 }

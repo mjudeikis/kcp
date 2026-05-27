@@ -32,11 +32,16 @@ import (
 
 type CertificatesV1alpha1ClusterInterface interface {
 	CertificatesV1alpha1ClusterScoper
+	CertificatesV1alpha1ClusterEvictor
 	ClusterTrustBundlesClusterGetter
 }
 
 type CertificatesV1alpha1ClusterScoper interface {
 	Cluster(logicalcluster.Path) certificatesv1alpha1.CertificatesV1alpha1Interface
+}
+
+type CertificatesV1alpha1ClusterEvictor interface {
+	Evict(logicalcluster.Path)
 }
 
 // CertificatesV1alpha1ClusterClient is used to interact with features provided by the certificates.k8s.io group.
@@ -49,6 +54,13 @@ func (c *CertificatesV1alpha1ClusterClient) Cluster(clusterPath logicalcluster.P
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *CertificatesV1alpha1ClusterClient) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
 }
 
 func (c *CertificatesV1alpha1ClusterClient) ClusterTrustBundles() ClusterTrustBundleClusterInterface {

@@ -32,12 +32,17 @@ import (
 
 type SchedulingV1alpha2ClusterInterface interface {
 	SchedulingV1alpha2ClusterScoper
+	SchedulingV1alpha2ClusterEvictor
 	PodGroupsClusterGetter
 	WorkloadsClusterGetter
 }
 
 type SchedulingV1alpha2ClusterScoper interface {
 	Cluster(logicalcluster.Path) schedulingv1alpha2.SchedulingV1alpha2Interface
+}
+
+type SchedulingV1alpha2ClusterEvictor interface {
+	Evict(logicalcluster.Path)
 }
 
 // SchedulingV1alpha2ClusterClient is used to interact with features provided by the scheduling.k8s.io group.
@@ -50,6 +55,13 @@ func (c *SchedulingV1alpha2ClusterClient) Cluster(clusterPath logicalcluster.Pat
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *SchedulingV1alpha2ClusterClient) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
 }
 
 func (c *SchedulingV1alpha2ClusterClient) PodGroups() PodGroupClusterInterface {

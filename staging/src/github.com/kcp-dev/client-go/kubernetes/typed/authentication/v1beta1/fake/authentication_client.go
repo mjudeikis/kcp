@@ -40,6 +40,9 @@ func (c *AuthenticationV1beta1ClusterClient) Cluster(clusterPath logicalcluster.
 	return &AuthenticationV1beta1Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *AuthenticationV1beta1ClusterClient) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *AuthenticationV1beta1ClusterClient) SelfSubjectReviews() kcpauthenticationv1beta1.SelfSubjectReviewClusterInterface {
 	return newFakeSelfSubjectReviewClusterClient(c)
 }

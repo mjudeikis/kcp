@@ -32,6 +32,7 @@ import (
 
 type AppsV1beta1ClusterInterface interface {
 	AppsV1beta1ClusterScoper
+	AppsV1beta1ClusterEvictor
 	ControllerRevisionsClusterGetter
 	DeploymentsClusterGetter
 	StatefulSetsClusterGetter
@@ -39,6 +40,10 @@ type AppsV1beta1ClusterInterface interface {
 
 type AppsV1beta1ClusterScoper interface {
 	Cluster(logicalcluster.Path) appsv1beta1.AppsV1beta1Interface
+}
+
+type AppsV1beta1ClusterEvictor interface {
+	Evict(logicalcluster.Path)
 }
 
 // AppsV1beta1ClusterClient is used to interact with features provided by the apps group.
@@ -51,6 +56,13 @@ func (c *AppsV1beta1ClusterClient) Cluster(clusterPath logicalcluster.Path) apps
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *AppsV1beta1ClusterClient) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
 }
 
 func (c *AppsV1beta1ClusterClient) ControllerRevisions() ControllerRevisionClusterInterface {

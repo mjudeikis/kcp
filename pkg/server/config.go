@@ -126,6 +126,13 @@ type ExtraConfig struct {
 
 	CacheDynamicClient kcpdynamic.ClusterInterface
 
+	// PartialMetadataClusterClient and CachePartialMetadataClusterClient back
+	// PartialMetadataDDSIF / CachePartialMetadataDDSIF. They are held here so
+	// the LogicalCluster delete handler can evict their per-cluster caches —
+	// see [installClientCacheEvictor].
+	PartialMetadataClusterClient      kcpdynamic.ClusterInterface
+	CachePartialMetadataClusterClient kcpdynamic.ClusterInterface
+
 	LogicalClusterAdminConfig         *rest.Config // client config connecting directly to shards, skipping the front proxy
 	ExternalLogicalClusterAdminConfig *rest.Config // client config connecting to the front proxy
 

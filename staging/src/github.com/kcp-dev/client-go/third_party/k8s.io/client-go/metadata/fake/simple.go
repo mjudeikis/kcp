@@ -103,6 +103,9 @@ func (c *FakeMetadataClusterClientset) Cluster(clusterPath logicalcluster.Path) 
 	return c.cluster(clusterPath)
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *FakeMetadataClusterClientset) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *FakeMetadataClusterClientset) cluster(clusterPath logicalcluster.Path) metadata.Interface {
 	return &FakeMetadataClient{
 		Fake:        c.Fake,

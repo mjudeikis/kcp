@@ -47,6 +47,13 @@ func (c ClusterClientset) Cluster(clusterPath logicalcluster.Path) scale.ScalesG
 	return c.clientCache.ClusterOrDie(clusterPath)
 }
 
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *ClusterClientset) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
+}
+
 var _ ClusterInterface = (*ClusterClientset)(nil)
 
 // NewForConfig creates a new ClusterClientset for the given config.

@@ -233,6 +233,9 @@ func (c *ClusterClientset) Cluster(clusterPath logicalcluster.Path) clientset.In
 		clusterPath: clusterPath,
 	}
 }
+
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *ClusterClientset) Evict(clusterPath logicalcluster.Path) {}
 `
 
 var clusterClientsetInterfaceImplTemplate = `

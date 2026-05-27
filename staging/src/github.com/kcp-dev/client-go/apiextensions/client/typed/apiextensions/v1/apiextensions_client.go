@@ -32,11 +32,16 @@ import (
 
 type ApiextensionsV1ClusterInterface interface {
 	ApiextensionsV1ClusterScoper
+	ApiextensionsV1ClusterEvictor
 	CustomResourceDefinitionsClusterGetter
 }
 
 type ApiextensionsV1ClusterScoper interface {
 	Cluster(logicalcluster.Path) apiextensionsv1.ApiextensionsV1Interface
+}
+
+type ApiextensionsV1ClusterEvictor interface {
+	Evict(logicalcluster.Path)
 }
 
 // ApiextensionsV1ClusterClient is used to interact with features provided by the apiextensions.k8s.io group.
@@ -49,6 +54,13 @@ func (c *ApiextensionsV1ClusterClient) Cluster(clusterPath logicalcluster.Path) 
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *ApiextensionsV1ClusterClient) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
 }
 
 func (c *ApiextensionsV1ClusterClient) CustomResourceDefinitions() CustomResourceDefinitionClusterInterface {

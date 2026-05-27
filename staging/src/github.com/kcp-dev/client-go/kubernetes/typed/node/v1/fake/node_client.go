@@ -40,6 +40,9 @@ func (c *NodeV1ClusterClient) Cluster(clusterPath logicalcluster.Path) nodev1.No
 	return &NodeV1Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *NodeV1ClusterClient) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *NodeV1ClusterClient) RuntimeClasses() kcpnodev1.RuntimeClassClusterInterface {
 	return newFakeRuntimeClassClusterClient(c)
 }

@@ -19,12 +19,11 @@ limitations under the License.
 package fake
 
 import (
-	rest "k8s.io/client-go/rest"
-
 	kcptesting "github.com/kcp-dev/client-go/third_party/k8s.io/client-go/testing"
 	"github.com/kcp-dev/logicalcluster/v3"
 	kcpapisv1alpha2 "github.com/kcp-dev/sdk/client/clientset/versioned/cluster/typed/apis/v1alpha2"
 	apisv1alpha2 "github.com/kcp-dev/sdk/client/clientset/versioned/typed/apis/v1alpha2"
+	rest "k8s.io/client-go/rest"
 )
 
 var _ kcpapisv1alpha2.ApisV1alpha2ClusterInterface = (*ApisV1alpha2ClusterClient)(nil)
@@ -39,6 +38,9 @@ func (c *ApisV1alpha2ClusterClient) Cluster(clusterPath logicalcluster.Path) api
 	}
 	return &ApisV1alpha2Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
+
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *ApisV1alpha2ClusterClient) Evict(clusterPath logicalcluster.Path) {}
 
 func (c *ApisV1alpha2ClusterClient) APIBindings() kcpapisv1alpha2.APIBindingClusterInterface {
 	return newFakeAPIBindingClusterClient(c)

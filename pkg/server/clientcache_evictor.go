@@ -22,19 +22,26 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
-	apiclient "github.com/kcp-dev/apimachinery/v2/pkg/client"
 	"github.com/kcp-dev/logicalcluster/v3"
 	corev1alpha1 "github.com/kcp-dev/sdk/apis/core/v1alpha1"
 	corev1alpha1informers "github.com/kcp-dev/sdk/client/informers/externalversions/core/v1alpha1"
 )
 
+// clientCacheEvictor is the subset of every cluster-scoped clientset in
+// github.com/kcp-dev/client-go (and kcp-dev/sdk) that exposes per-cluster
+// cache eviction. The top-level ClusterClientset.Evict fans out to all of
+// its typed sub-clientsets, so the server only needs to track top-level
+// clientsets here.
+type clientCacheEvictor interface {
+	Evict(logicalcluster.Path)
+}
+
 // installClientCacheEvictor registers a LogicalCluster delete handler that
-// notifies apiclient.EvictCluster, which fans out to every per-cluster client
-// cache (kube, sdk, dynamic, metadata, ...) constructed via apiclient.NewCache.
-// Without this, those caches grow monotonically and pin per-cluster REST
+// calls Evict on every supplied cluster clientset. Without this, the
+// per-cluster client caches grow monotonically and pin per-cluster REST
 // clients, codec factories, JSON-decoded schemas, etc. for the lifetime of
 // the process. See https://github.com/kcp-dev/kcp/issues/4071.
-func installClientCacheEvictor(ctx context.Context, informer corev1alpha1informers.LogicalClusterClusterInformer) {
+func installClientCacheEvictor(ctx context.Context, informer corev1alpha1informers.LogicalClusterClusterInformer, evictors []clientCacheEvictor) {
 	logger := klog.FromContext(ctx)
 	_, _ = informer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		DeleteFunc: func(obj any) {
@@ -54,7 +61,9 @@ func installClientCacheEvictor(ctx context.Context, informer corev1alpha1informe
 				return
 			}
 			logger.V(4).Info("evicting per-cluster client caches", "logicalcluster", name)
-			apiclient.EvictCluster(name.Path())
+			for _, e := range evictors {
+				e.Evict(name.Path())
+			}
 		},
 	})
 }

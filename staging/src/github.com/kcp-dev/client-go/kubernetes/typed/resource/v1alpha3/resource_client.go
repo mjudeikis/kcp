@@ -32,12 +32,17 @@ import (
 
 type ResourceV1alpha3ClusterInterface interface {
 	ResourceV1alpha3ClusterScoper
+	ResourceV1alpha3ClusterEvictor
 	DeviceTaintRulesClusterGetter
 	ResourcePoolStatusRequestsClusterGetter
 }
 
 type ResourceV1alpha3ClusterScoper interface {
 	Cluster(logicalcluster.Path) resourcev1alpha3.ResourceV1alpha3Interface
+}
+
+type ResourceV1alpha3ClusterEvictor interface {
+	Evict(logicalcluster.Path)
 }
 
 // ResourceV1alpha3ClusterClient is used to interact with features provided by the resource.k8s.io group.
@@ -50,6 +55,13 @@ func (c *ResourceV1alpha3ClusterClient) Cluster(clusterPath logicalcluster.Path)
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *ResourceV1alpha3ClusterClient) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
 }
 
 func (c *ResourceV1alpha3ClusterClient) DeviceTaintRules() DeviceTaintRuleClusterInterface {

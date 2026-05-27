@@ -40,6 +40,9 @@ func (c *RbacV1ClusterClient) Cluster(clusterPath logicalcluster.Path) rbacv1.Rb
 	return &RbacV1Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *RbacV1ClusterClient) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *RbacV1ClusterClient) ClusterRoles() kcprbacv1.ClusterRoleClusterInterface {
 	return newFakeClusterRoleClusterClient(c)
 }

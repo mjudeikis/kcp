@@ -45,6 +45,13 @@ func (c *ClusterClientset) Cluster(clusterPath logicalcluster.Path) dynamic.Inte
 	return c.clientCache.ClusterOrDie(clusterPath)
 }
 
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *ClusterClientset) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
+}
+
 func (c *ClusterClientset) Resource(resource schema.GroupVersionResource) ResourceClusterInterface {
 	return &ClusterResourceClient{clientCache: c.clientCache, resource: resource}
 }

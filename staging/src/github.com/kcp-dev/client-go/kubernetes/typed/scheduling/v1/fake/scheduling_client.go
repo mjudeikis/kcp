@@ -40,6 +40,9 @@ func (c *SchedulingV1ClusterClient) Cluster(clusterPath logicalcluster.Path) sch
 	return &SchedulingV1Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *SchedulingV1ClusterClient) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *SchedulingV1ClusterClient) PriorityClasses() kcpschedulingv1.PriorityClassClusterInterface {
 	return newFakePriorityClassClusterClient(c)
 }

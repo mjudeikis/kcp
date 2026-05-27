@@ -19,13 +19,8 @@ limitations under the License.
 package fake
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/discovery"
-
 	kcpfakediscovery "github.com/kcp-dev/client-go/third_party/k8s.io/client-go/discovery/fake"
 	kcptesting "github.com/kcp-dev/client-go/third_party/k8s.io/client-go/testing"
-	"github.com/kcp-dev/logicalcluster/v3"
-
 	kcpapplyconfiguration "github.com/kcp-dev/kcp/test/e2e/fixtures/wildwest/client/applyconfiguration"
 	clientset "github.com/kcp-dev/kcp/test/e2e/fixtures/wildwest/client/clientset/versioned"
 	kcpclientset "github.com/kcp-dev/kcp/test/e2e/fixtures/wildwest/client/clientset/versioned/cluster"
@@ -33,6 +28,9 @@ import (
 	kcpwildwestv1alpha1 "github.com/kcp-dev/kcp/test/e2e/fixtures/wildwest/client/clientset/versioned/cluster/typed/wildwest/v1alpha1"
 	kcpfakewildwestv1alpha1 "github.com/kcp-dev/kcp/test/e2e/fixtures/wildwest/client/clientset/versioned/cluster/typed/wildwest/v1alpha1/fake"
 	wildwestv1alpha1 "github.com/kcp-dev/kcp/test/e2e/fixtures/wildwest/client/clientset/versioned/typed/wildwest/v1alpha1"
+	"github.com/kcp-dev/logicalcluster/v3"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/discovery"
 )
 
 // NewSimpleClientset returns a clientset that will respond with the provided objects.
@@ -107,6 +105,9 @@ func (c *ClusterClientset) Cluster(clusterPath logicalcluster.Path) clientset.In
 		clusterPath: clusterPath,
 	}
 }
+
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *ClusterClientset) Evict(clusterPath logicalcluster.Path) {}
 
 // WildwestV1alpha1 retrieves the WildwestV1alpha1ClusterClient
 func (c *ClusterClientset) WildwestV1alpha1() kcpwildwestv1alpha1.WildwestV1alpha1ClusterInterface {

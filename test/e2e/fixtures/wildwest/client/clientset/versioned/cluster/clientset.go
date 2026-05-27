@@ -22,19 +22,18 @@ import (
 	fmt "fmt"
 	http "net/http"
 
+	kcpclient "github.com/kcp-dev/apimachinery/v2/pkg/client"
+	client "github.com/kcp-dev/kcp/test/e2e/fixtures/wildwest/client/clientset/versioned"
+	wildwestv1alpha1 "github.com/kcp-dev/kcp/test/e2e/fixtures/wildwest/client/clientset/versioned/cluster/typed/wildwest/v1alpha1"
+	"github.com/kcp-dev/logicalcluster/v3"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
-
-	kcpclient "github.com/kcp-dev/apimachinery/v2/pkg/client"
-	"github.com/kcp-dev/logicalcluster/v3"
-
-	client "github.com/kcp-dev/kcp/test/e2e/fixtures/wildwest/client/clientset/versioned"
-	wildwestv1alpha1 "github.com/kcp-dev/kcp/test/e2e/fixtures/wildwest/client/clientset/versioned/cluster/typed/wildwest/v1alpha1"
 )
 
 type ClusterInterface interface {
 	Cluster(logicalcluster.Path) client.Interface
+	Evict(logicalcluster.Path)
 	Discovery() discovery.DiscoveryInterface
 	WildwestV1alpha1() wildwestv1alpha1.WildwestV1alpha1ClusterInterface
 }
@@ -65,6 +64,17 @@ func (c *ClusterClientset) Cluster(clusterPath logicalcluster.Path) client.Inter
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict releases per-cluster client state for clusterPath across every
+// sub-clientset this ClusterClientset composes. Once a path is evicted the
+// underlying caches stop re-caching for it, so future Cluster(path) calls
+// hand back freshly-built clients without retaining them. Wire this to
+// LogicalCluster delete events to bound retained memory per workspace
+// lifetime.
+func (c *ClusterClientset) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
+	c.wildwestV1alpha1.Evict(clusterPath)
 }
 
 // NewForConfig creates a new ClusterClientset for the given config.

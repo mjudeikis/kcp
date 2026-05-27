@@ -40,6 +40,9 @@ func (c *SchedulingV1alpha2ClusterClient) Cluster(clusterPath logicalcluster.Pat
 	return &SchedulingV1alpha2Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *SchedulingV1alpha2ClusterClient) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *SchedulingV1alpha2ClusterClient) PodGroups() kcpschedulingv1alpha2.PodGroupClusterInterface {
 	return newFakePodGroupClusterClient(c)
 }

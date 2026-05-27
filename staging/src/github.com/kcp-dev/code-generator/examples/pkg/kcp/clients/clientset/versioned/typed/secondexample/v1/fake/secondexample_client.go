@@ -41,6 +41,9 @@ func (c *SecondexampleV1ClusterClient) Cluster(clusterPath logicalcluster.Path) 
 	return &SecondexampleV1Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *SecondexampleV1ClusterClient) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *SecondexampleV1ClusterClient) ClusterTestTypes() kcpsecondexamplev1.ClusterTestTypeClusterInterface {
 	return newFakeClusterTestTypeClusterClient(c)
 }

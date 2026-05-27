@@ -40,6 +40,9 @@ func (c *NetworkingV1ClusterClient) Cluster(clusterPath logicalcluster.Path) net
 	return &NetworkingV1Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *NetworkingV1ClusterClient) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *NetworkingV1ClusterClient) IPAddresses() kcpnetworkingv1.IPAddressClusterInterface {
 	return newFakeIPAddressClusterClient(c)
 }

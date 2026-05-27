@@ -165,7 +165,7 @@ func NewServer(c CompletedConfig) (*Server, error) {
 		),
 	)
 
-	metadataClusterClient, err := metadataclient.NewDynamicMetadataClusterClientForConfig(
+	s.PartialMetadataClusterClient, err = metadataclient.NewDynamicMetadataClusterClientForConfig(
 		rest.AddUserAgent(rest.CopyConfig(s.MiniAggregator.GenericAPIServer.LoopbackClientConfig), "kcp-partial-metadata-informers"))
 	if err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func NewServer(c CompletedConfig) (*Server, error) {
 	}
 
 	s.PartialMetadataDDSIF, err = informer.NewDiscoveringDynamicSharedInformerFactory(
-		metadataClusterClient,
+		s.PartialMetadataClusterClient,
 		func(obj interface{}) bool { return true },
 		nil,
 		crdGVRSource,
@@ -195,12 +195,12 @@ func NewServer(c CompletedConfig) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	cacheMetadataClusterClient, err := metadataclient.NewDynamicMetadataClusterClientForConfig(rest.AddUserAgent(rest.CopyConfig(cacheClientConfig), "kcp-cache-partial-metadata-informers"))
+	s.CachePartialMetadataClusterClient, err = metadataclient.NewDynamicMetadataClusterClientForConfig(rest.AddUserAgent(rest.CopyConfig(cacheClientConfig), "kcp-cache-partial-metadata-informers"))
 	if err != nil {
 		return nil, err
 	}
 	s.CachePartialMetadataDDSIF, err = informer.NewDiscoveringDynamicSharedInformerFactory(
-		cacheMetadataClusterClient,
+		s.CachePartialMetadataClusterClient,
 		func(obj interface{}) bool { return true },
 		nil,
 		cacheCrdGVRSource,
@@ -508,7 +508,25 @@ func (s *Server) Run(ctx context.Context) error {
 			return nil // don't klog.Fatal. This only happens when context is cancelled.
 		}
 		logger.Info("finished starting APIExport, APIBinding and LogicalCluster informers")
-		installClientCacheEvictor(hookCtx, s.KcpSharedInformerFactory.Core().V1alpha1().LogicalClusters())
+		// Fan out LogicalCluster delete events to every cluster-scoped clientset
+		// the server owns so each one releases its per-workspace cached client
+		// state (REST clients, codec factories, parsed schemas, ...). New
+		// long-lived clientsets must be appended here or they will leak.
+		installClientCacheEvictor(hookCtx, s.KcpSharedInformerFactory.Core().V1alpha1().LogicalClusters(), []clientCacheEvictor{
+			s.KubeClusterClient,
+			s.DeepSARClient,
+			s.KcpClusterClient,
+			s.KcpCacheClusterClient,
+			s.RootShardKcpClusterClient,
+			s.ApiExtensionsClusterClient,
+			s.CacheApiExtensionsClusterClient,
+			s.BootstrapApiExtensionsClusterClient,
+			s.DynamicClusterClient,
+			s.CacheDynamicClient,
+			s.BootstrapDynamicClusterClient,
+			s.PartialMetadataClusterClient,
+			s.CachePartialMetadataClusterClient,
+		})
 
 		if s.Options.Extra.ShardName == corev1alpha1.RootShard {
 			logger.Info("bootstrapping root workspace phase 0")

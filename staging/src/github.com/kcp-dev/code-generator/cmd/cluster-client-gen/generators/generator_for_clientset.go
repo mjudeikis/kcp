@@ -101,6 +101,7 @@ func (g *genClientset) GenerateType(c *generator.Context, _ *types.Type, w io.Wr
 		sw.Do(clientsetInterfaceImplTemplate, g)
 	}
 	sw.Do(getClusterTemplate, m)
+	sw.Do(evictClusterTemplate, m)
 	sw.Do(newClientsetForConfigTemplate, m)
 	sw.Do(newClientsetForConfigAndClientTemplate, m)
 	sw.Do(newClientsetForConfigOrDieTemplate, m)
@@ -112,6 +113,7 @@ func (g *genClientset) GenerateType(c *generator.Context, _ *types.Type, w io.Wr
 var clientsetInterface = `
 type ClusterInterface interface {
 	Cluster(logicalcluster.Path) client.Interface
+	Evict(logicalcluster.Path)
 	Discovery() $.DiscoveryInterface|raw$
     $range .allGroups$$.GroupGoName$$.Version$() $.PackageAlias$.$.GroupGoName$$.Version$ClusterInterface
 	$end$
@@ -153,6 +155,19 @@ func (c *ClusterClientset) Cluster(clusterPath logicalcluster.Path) client.Inter
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
 }
+`
+
+var evictClusterTemplate = `
+// Evict releases per-cluster client state for clusterPath across every
+// sub-clientset this ClusterClientset composes. Once a path is evicted the
+// underlying caches stop re-caching for it, so future Cluster(path) calls
+// hand back freshly-built clients without retaining them. Wire this to
+// LogicalCluster delete events to bound retained memory per workspace
+// lifetime.
+func (c *ClusterClientset) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
+$range .allGroups$    c.$.LowerCaseGroupGoName$$.Version$.Evict(clusterPath)
+$end$}
 `
 
 var newClientsetForConfigTemplate = `

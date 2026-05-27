@@ -42,6 +42,7 @@ import (
 
 type ClusterInterface interface {
 	Cluster(logicalcluster.Path) client.Interface
+	Evict(logicalcluster.Path)
 	Discovery() discovery.DiscoveryInterface
 	ExampleV1() examplev1.ExampleV1ClusterInterface
 	ExampleV1alpha1() examplev1alpha1.ExampleV1alpha1ClusterInterface
@@ -121,6 +122,24 @@ func (c *ClusterClientset) Cluster(clusterPath logicalcluster.Path) client.Inter
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict releases per-cluster client state for clusterPath across every
+// sub-clientset this ClusterClientset composes. Once a path is evicted the
+// underlying caches stop re-caching for it, so future Cluster(path) calls
+// hand back freshly-built clients without retaining them. Wire this to
+// LogicalCluster delete events to bound retained memory per workspace
+// lifetime.
+func (c *ClusterClientset) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
+	c.exampleV1.Evict(clusterPath)
+	c.exampleV1alpha1.Evict(clusterPath)
+	c.exampleV1beta1.Evict(clusterPath)
+	c.exampleV2.Evict(clusterPath)
+	c.example3V1.Evict(clusterPath)
+	c.exampleDashedV1.Evict(clusterPath)
+	c.existinginterfacesV1.Evict(clusterPath)
+	c.secondexampleV1.Evict(clusterPath)
 }
 
 // NewForConfig creates a new ClusterClientset for the given config.

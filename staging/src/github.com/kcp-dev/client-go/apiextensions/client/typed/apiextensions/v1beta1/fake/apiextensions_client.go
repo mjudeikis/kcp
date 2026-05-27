@@ -40,6 +40,9 @@ func (c *ApiextensionsV1beta1ClusterClient) Cluster(clusterPath logicalcluster.P
 	return &ApiextensionsV1beta1Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *ApiextensionsV1beta1ClusterClient) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *ApiextensionsV1beta1ClusterClient) CustomResourceDefinitions() kcpapiextensionsv1beta1.CustomResourceDefinitionClusterInterface {
 	return newFakeCustomResourceDefinitionClusterClient(c)
 }

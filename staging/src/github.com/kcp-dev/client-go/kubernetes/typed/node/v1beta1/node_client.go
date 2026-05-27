@@ -32,11 +32,16 @@ import (
 
 type NodeV1beta1ClusterInterface interface {
 	NodeV1beta1ClusterScoper
+	NodeV1beta1ClusterEvictor
 	RuntimeClassesClusterGetter
 }
 
 type NodeV1beta1ClusterScoper interface {
 	Cluster(logicalcluster.Path) nodev1beta1.NodeV1beta1Interface
+}
+
+type NodeV1beta1ClusterEvictor interface {
+	Evict(logicalcluster.Path)
 }
 
 // NodeV1beta1ClusterClient is used to interact with features provided by the node.k8s.io group.
@@ -49,6 +54,13 @@ func (c *NodeV1beta1ClusterClient) Cluster(clusterPath logicalcluster.Path) node
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *NodeV1beta1ClusterClient) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
 }
 
 func (c *NodeV1beta1ClusterClient) RuntimeClasses() RuntimeClassClusterInterface {

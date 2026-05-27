@@ -40,6 +40,9 @@ func (c *CoreV1ClusterClient) Cluster(clusterPath logicalcluster.Path) corev1.Co
 	return &CoreV1Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
 
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *CoreV1ClusterClient) Evict(clusterPath logicalcluster.Path) {}
+
 func (c *CoreV1ClusterClient) ComponentStatuses() kcpcorev1.ComponentStatusClusterInterface {
 	return newFakeComponentStatusClusterClient(c)
 }

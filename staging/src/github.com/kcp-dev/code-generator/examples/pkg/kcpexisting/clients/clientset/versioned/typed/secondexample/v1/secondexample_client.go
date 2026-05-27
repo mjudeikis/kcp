@@ -33,12 +33,17 @@ import (
 
 type SecondexampleV1ClusterInterface interface {
 	SecondexampleV1ClusterScoper
+	SecondexampleV1ClusterEvictor
 	ClusterTestTypesClusterGetter
 	TestTypesClusterGetter
 }
 
 type SecondexampleV1ClusterScoper interface {
 	Cluster(logicalcluster.Path) secondexamplev1.SecondexampleV1Interface
+}
+
+type SecondexampleV1ClusterEvictor interface {
+	Evict(logicalcluster.Path)
 }
 
 // SecondexampleV1ClusterClient is used to interact with features provided by the secondexample.dev group.
@@ -51,6 +56,13 @@ func (c *SecondexampleV1ClusterClient) Cluster(clusterPath logicalcluster.Path) 
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *SecondexampleV1ClusterClient) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
 }
 
 func (c *SecondexampleV1ClusterClient) ClusterTestTypes() ClusterTestTypeClusterInterface {

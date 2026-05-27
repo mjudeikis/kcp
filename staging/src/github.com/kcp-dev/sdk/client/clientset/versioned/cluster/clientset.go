@@ -22,10 +22,6 @@ import (
 	fmt "fmt"
 	http "net/http"
 
-	discovery "k8s.io/client-go/discovery"
-	rest "k8s.io/client-go/rest"
-	flowcontrol "k8s.io/client-go/util/flowcontrol"
-
 	kcpclient "github.com/kcp-dev/apimachinery/v2/pkg/client"
 	"github.com/kcp-dev/logicalcluster/v3"
 	client "github.com/kcp-dev/sdk/client/clientset/versioned"
@@ -35,10 +31,14 @@ import (
 	corev1alpha1 "github.com/kcp-dev/sdk/client/clientset/versioned/cluster/typed/core/v1alpha1"
 	tenancyv1alpha1 "github.com/kcp-dev/sdk/client/clientset/versioned/cluster/typed/tenancy/v1alpha1"
 	topologyv1alpha1 "github.com/kcp-dev/sdk/client/clientset/versioned/cluster/typed/topology/v1alpha1"
+	discovery "k8s.io/client-go/discovery"
+	rest "k8s.io/client-go/rest"
+	flowcontrol "k8s.io/client-go/util/flowcontrol"
 )
 
 type ClusterInterface interface {
 	Cluster(logicalcluster.Path) client.Interface
+	Evict(logicalcluster.Path)
 	Discovery() discovery.DiscoveryInterface
 	ApisV1alpha1() apisv1alpha1.ApisV1alpha1ClusterInterface
 	ApisV1alpha2() apisv1alpha2.ApisV1alpha2ClusterInterface
@@ -104,6 +104,22 @@ func (c *ClusterClientset) Cluster(clusterPath logicalcluster.Path) client.Inter
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict releases per-cluster client state for clusterPath across every
+// sub-clientset this ClusterClientset composes. Once a path is evicted the
+// underlying caches stop re-caching for it, so future Cluster(path) calls
+// hand back freshly-built clients without retaining them. Wire this to
+// LogicalCluster delete events to bound retained memory per workspace
+// lifetime.
+func (c *ClusterClientset) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
+	c.apisV1alpha1.Evict(clusterPath)
+	c.apisV1alpha2.Evict(clusterPath)
+	c.cacheV1alpha1.Evict(clusterPath)
+	c.coreV1alpha1.Evict(clusterPath)
+	c.tenancyV1alpha1.Evict(clusterPath)
+	c.topologyV1alpha1.Evict(clusterPath)
 }
 
 // NewForConfig creates a new ClusterClientset for the given config.

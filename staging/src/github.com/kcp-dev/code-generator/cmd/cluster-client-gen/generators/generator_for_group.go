@@ -141,6 +141,7 @@ func (g *genGroup) GenerateType(c *generator.Context, t *types.Type, w io.Writer
 var groupInterfaceTemplate = `
 type $.GroupGoName$$.Version$ClusterInterface interface {
 	$.GroupGoName$$.Version$ClusterScoper
+	$.GroupGoName$$.Version$ClusterEvictor
 	$range .types$ $.|publicPlural$ClusterGetter
 	$end$
 }
@@ -149,6 +150,10 @@ type $.GroupGoName$$.Version$ClusterInterface interface {
 var clusterScoperTemplate = `
 type $.GroupGoName$$.Version$ClusterScoper interface {
 	Cluster(logicalcluster.Path) $.typedInterfaceReference|raw$
+}
+
+type $.GroupGoName$$.Version$ClusterEvictor interface {
+	Evict(logicalcluster.Path)
 }
 `
 
@@ -163,6 +168,13 @@ func (c *$.GroupGoName$$.Version$ClusterClient) Cluster(clusterPath logicalclust
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *$.GroupGoName$$.Version$ClusterClient) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
 }
 `
 

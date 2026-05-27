@@ -145,6 +145,9 @@ func (c *$.GroupGoName$$.Version$ClusterClient) Cluster(clusterPath logicalclust
 	}
 	return &$.GroupGoName$$.Version$Client{Fake: c.Fake, ClusterPath: clusterPath}
 }
+
+// Evict is a no-op on the fake client: there is no per-cluster cache to drop.
+func (c *$.GroupGoName$$.Version$ClusterClient) Evict(clusterPath logicalcluster.Path) {}
 `
 
 var clusterGetterImpl = `

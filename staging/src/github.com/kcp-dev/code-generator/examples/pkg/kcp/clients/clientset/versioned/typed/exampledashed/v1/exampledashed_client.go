@@ -33,12 +33,17 @@ import (
 
 type ExampleDashedV1ClusterInterface interface {
 	ExampleDashedV1ClusterScoper
+	ExampleDashedV1ClusterEvictor
 	ClusterTestTypesClusterGetter
 	TestTypesClusterGetter
 }
 
 type ExampleDashedV1ClusterScoper interface {
 	Cluster(logicalcluster.Path) exampledashedv1.ExampleDashedV1Interface
+}
+
+type ExampleDashedV1ClusterEvictor interface {
+	Evict(logicalcluster.Path)
 }
 
 // ExampleDashedV1ClusterClient is used to interact with features provided by the example-dashed.some.corp group.
@@ -51,6 +56,13 @@ func (c *ExampleDashedV1ClusterClient) Cluster(clusterPath logicalcluster.Path) 
 		panic("A specific cluster must be provided when scoping, not the wildcard.")
 	}
 	return c.clientCache.ClusterOrDie(clusterPath)
+}
+
+// Evict drops the cached per-cluster client for clusterPath, if any, and
+// prevents future re-caching for that path. Wire this to LogicalCluster
+// delete events to release per-cluster client state on workspace deletion.
+func (c *ExampleDashedV1ClusterClient) Evict(clusterPath logicalcluster.Path) {
+	c.clientCache.Evict(clusterPath)
 }
 
 func (c *ExampleDashedV1ClusterClient) ClusterTestTypes() ClusterTestTypeClusterInterface {
