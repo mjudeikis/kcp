@@ -105,8 +105,22 @@ func ListURLsFromUnstructured(endpointSlice unstructured.Unstructured) ([]string
 	return urls, nil
 }
 
-// FindOneURL finds exactly one URL with matching prefix in the urls slice.
-// Multiple matches result in an error.
+// FindOneURL picks the URL this shard should use out of the ones an endpoint
+// slice advertises.
+//
+// The prefix is the shard's own virtual workspace URL, and it is a *selection*
+// rule: a slice filled in by kcp's own controllers carries one URL per shard,
+// all composed from each shard's virtual workspace URL, and this is how a shard
+// finds its own. It is not an authorization rule -- what a shard may talk to is
+// decided by whoever gets to write the URL, and by the egress policy applied
+// when dialling it.
+//
+// A slice may equally advertise a single URL meant for every shard, which is
+// what a provider running one virtual workspace for the whole installation
+// publishes. There is nothing to select in that case, so the prefix does not
+// apply and the URL is used as it stands. Anything else -- several URLs, none
+// of them this shard's -- is a slice that does not describe this shard, and
+// that is an error rather than a guess.
 func FindOneURL(prefix string, urls []string) (string, error) {
 	var matches []string
 	for _, url := range urls {
@@ -119,7 +133,15 @@ func FindOneURL(prefix string, urls []string) (string, error) {
 	case 1:
 		return matches[0], nil
 	case 0:
-		return "", fmt.Errorf("no URLs match prefix %q", prefix)
+		// A single URL is a singleton: one virtual workspace serving every
+		// shard, so there is no per-shard choice to make.
+		if len(urls) == 1 {
+			return urls[0], nil
+		}
+		if len(urls) == 0 {
+			return "", fmt.Errorf("no URLs to choose from")
+		}
+		return "", fmt.Errorf("none of the URLs %v are for this shard (prefix %q), and there is more than one to choose from", urls, prefix)
 	default:
 		return "", fmt.Errorf("ambiguous URLs %v with prefix %q", matches, prefix)
 	}
