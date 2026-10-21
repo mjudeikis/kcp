@@ -286,6 +286,9 @@ func (s *Server) installControllers(ctx context.Context, controllerConfig *rest.
 	if err := s.installApiExportIdentityController(ctx, controllerConfig); err != nil {
 		return err
 	}
+	if err := s.installAPIIdentityController(ctx, controllerConfig); err != nil {
+		return err
+	}
 	if err := s.installShardRepresentationController(ctx, controllerConfig); err != nil {
 		return err
 	}
@@ -315,6 +318,15 @@ func (s *Server) installControllers(ctx context.Context, controllerConfig *rest.
 			return err
 		}
 		if err := s.installLogicalCluster(ctx, controllerConfig, s.ExternalLogicalClusterAdminConfig); err != nil {
+			return err
+		}
+	}
+
+	if kcpfeatures.DefaultFeatureGate.Enabled(kcpfeatures.APIExportStorageRekey) {
+		if err := s.installStorageMigratorController(ctx, controllerConfig); err != nil {
+			return err
+		}
+		if err := s.installStorageRekeyController(ctx, controllerConfig); err != nil {
 			return err
 		}
 	}
@@ -590,37 +602,33 @@ func (s *Server) Run(ctx context.Context) error {
 				return nil // don't klog.Fatal. This only happens when context is cancelled.
 			}
 			logger.Info("bootstrapped root workspace phase 0")
-
-			logger.Info("getting kcp APIExport identities")
-			var identityErr error
-			if err := wait.PollUntilContextCancel(hookCtx, time.Millisecond*500, true, func(ctx context.Context) (bool, error) {
-				if err := s.resolveIdentities(ctx); err != nil {
-					logger.V(3).Info("failed to resolve identities, keeping trying", "err", err)
-					identityErr = err
-					return false, nil
-				}
-				return true, nil
-			}); err != nil {
-				logger.Error(err, "failed to get or create identities: %w", identityErr)
-				return nil // don't klog.Fatal. This only happens when context is cancelled.
-			}
-			logger.Info("finished getting kcp APIExport identities")
-		} else if len(s.Options.Extra.RootShardKubeconfigFile) > 0 {
-			logger.Info("getting kcp APIExport identities for the root shard")
-			if err := wait.PollUntilContextCancel(hookContext, time.Millisecond*500, true, func(ctx context.Context) (bool, error) {
-				if err := s.resolveIdentities(ctx); err != nil {
-					logger.V(3).Info("failed to resolve identities for the root shard, keeping trying", "err", err)
-					return false, nil
-				}
-				return true, nil
-			}); err != nil {
-				logger.Error(err, "failed to get or create identities for the root shard")
-				return nil // don't klog.Fatal. This only happens when context is cancelled.
-			}
-			logger.Info("finished getting kcp APIExport identities for the root shard")
 		}
 
-		_, _ = s.CacheKcpSharedInformerFactory.Apis().V1alpha2().APIExports().Informer().AddEventHandler(s.coreIdentityHandler)
+		// Every shard resolves the identities of the core APIExports: the root
+		// shard from its own APIExports, the other shards from what they
+		// already use, from the cache server (the APIIdentity registry and the
+		// replicated root APIExports) or (legacy) from the root shard.
+		logger.Info("getting kcp APIExport identities")
+		var identityErr error
+		if err := wait.PollUntilContextCancel(hookCtx, time.Millisecond*500, true, func(ctx context.Context) (bool, error) {
+			if err := s.resolveIdentities(ctx); err != nil {
+				logger.V(3).Info("failed to resolve identities, keeping trying", "err", err)
+				identityErr = err
+				return false, nil
+			}
+			return true, nil
+		}); err != nil {
+			logger.Error(err, "failed to get or create identities", "lastError", identityErr)
+			return nil // don't klog.Fatal. This only happens when context is cancelled.
+		}
+		logger.Info("finished getting kcp APIExport identities")
+
+		// From here on the identities follow the APIExports in the root
+		// workspace as replicated to the cache server. Every shard, the root
+		// shard included, uses that one source: a handler fed from the local
+		// informer as well would briefly fall back to the old identity when
+		// the replicated copy, which lags behind, arrives.
+		_, _ = s.CacheKcpSharedInformerFactory.Apis().V1alpha2().APIExports().Informer().AddEventHandler(s.coreIdentities.APIExportHandler())
 
 		s.KcpSharedInformerFactory.Start(hookCtx.Done())
 		s.CacheKcpSharedInformerFactory.Start(hookCtx.Done())

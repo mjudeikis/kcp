@@ -64,6 +64,7 @@ const (
 func NewController(
 	kcpClusterClient kcpclientset.ClusterInterface,
 	apiExportInformer apisv1alpha2informers.APIExportClusterInformer,
+	globalAPIExportInformer apisv1alpha2informers.APIExportClusterInformer,
 	apiExportEndpointSliceInformer apisv1alpha1informers.APIExportEndpointSliceClusterInformer,
 	globalShardInformer corev1alpha1informers.ShardClusterInformer,
 	kubeClusterClient kcpkubernetesclientset.ClusterInterface,
@@ -96,6 +97,9 @@ func NewController(
 		},
 		getAPIExport: func(clusterName logicalcluster.Name, name string) (*apisv1alpha2.APIExport, error) {
 			return apiExportInformer.Lister().Cluster(clusterName).Get(name)
+		},
+		getAPIExportsByIdentity: func(identityHash string) ([]*apisv1alpha2.APIExport, error) {
+			return indexers.ByIndexWithFallback[*apisv1alpha2.APIExport](apiExportInformer.Informer().GetIndexer(), globalAPIExportInformer.Informer().GetIndexer(), indexers.APIExportByIdentity, identityHash)
 		},
 		getAPIExportEndpointSlice: func(clusterName logicalcluster.Name, name string) (*apisv1alpha1.APIExportEndpointSlice, error) {
 			return apiExportEndpointSliceInformer.Lister().Cluster(clusterName).Get(name)
@@ -217,6 +221,7 @@ type controller struct {
 	listAPIExports          func() ([]*apisv1alpha2.APIExport, error)
 	listAPIExportsForSecret func(secret *corev1.Secret) ([]*apisv1alpha2.APIExport, error)
 	getAPIExport            func(clusterName logicalcluster.Name, name string) (*apisv1alpha2.APIExport, error)
+	getAPIExportsByIdentity func(identityHash string) ([]*apisv1alpha2.APIExport, error)
 
 	getAPIExportEndpointSlice    func(clusterName logicalcluster.Name, name string) (*apisv1alpha1.APIExportEndpointSlice, error)
 	createAPIExportEndpointSlice func(ctx context.Context, clusterName logicalcluster.Path, apiExportEndpointSlice *apisv1alpha1.APIExportEndpointSlice) error
@@ -395,12 +400,18 @@ func (c *controller) process(ctx context.Context, key string) error {
 }
 
 // InstallIndexers adds the additional indexers that this controller requires to the informers.
-func InstallIndexers(apiExportInformer apisv1alpha2informers.APIExportClusterInformer) {
+func InstallIndexers(apiExportInformer, globalAPIExportInformer apisv1alpha2informers.APIExportClusterInformer) {
 	indexers.AddIfNotPresentOrDie(
 		apiExportInformer.Informer().GetIndexer(),
 		cache.Indexers{
 			indexers.APIExportByIdentity: indexers.IndexAPIExportByIdentity,
 			indexers.APIExportBySecret:   indexers.IndexAPIExportBySecret,
+		},
+	)
+	indexers.AddIfNotPresentOrDie(
+		globalAPIExportInformer.Informer().GetIndexer(),
+		cache.Indexers{
+			indexers.APIExportByIdentity: indexers.IndexAPIExportByIdentity,
 		},
 	)
 }

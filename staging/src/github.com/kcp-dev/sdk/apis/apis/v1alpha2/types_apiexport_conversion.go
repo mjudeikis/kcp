@@ -101,6 +101,13 @@ func Convert_v1alpha2_APIExport_To_v1alpha1_APIExport(in *APIExport, out *apisv1
 	return Convert_v1alpha2_APIExportStatus_To_v1alpha1_APIExportStatus(&in.Status, &out.Status, s)
 }
 
+// Convert_v1alpha2_APIExportStatus_To_v1alpha1_APIExportStatus drops the
+// identity source and storage report on down-conversion: v1alpha1 sees only
+// the identity hash.
+func Convert_v1alpha2_APIExportStatus_To_v1alpha1_APIExportStatus(in *APIExportStatus, out *apisv1alpha1.APIExportStatus, s kubeconversion.Scope) error {
+	return autoConvert_v1alpha2_APIExportStatus_To_v1alpha1_APIExportStatus(in, out, s)
+}
+
 func Convert_v1alpha2_ResourceSchemas_To_v1alpha1_LatestResourceSchemas(in APIExportSpec) ([]string, []ResourceSchema) {
 	hubSchemas := []string{}
 	nonCRDSchemas := []ResourceSchema{}
@@ -377,4 +384,11 @@ func Convert_v1alpha1_LatestResourceSchema_To_v1alpha2_ResourceSchema(in []strin
 // PermissionClaims. Fields "All", "ResourceSelector", and "Verbs" are stored in relevant annotations.
 func Convert_v1alpha1_PermissionClaim_To_v1alpha2_PermissionClaim(in *apisv1alpha1.PermissionClaim, out *PermissionClaim, s kubeconversion.Scope) error {
 	return autoConvert_v1alpha1_PermissionClaim_To_v1alpha2_PermissionClaim(in, out, s)
+}
+
+// Convert_v1alpha2_Identity_To_v1alpha1_Identity drops value: v1alpha1 can
+// only pin an identity through a secret. The pin only matters until the
+// identity is assigned, so nothing is lost for an export that has one.
+func Convert_v1alpha2_Identity_To_v1alpha1_Identity(in *Identity, out *apisv1alpha1.Identity, s kubeconversion.Scope) error {
+	return autoConvert_v1alpha2_Identity_To_v1alpha1_Identity(in, out, s)
 }

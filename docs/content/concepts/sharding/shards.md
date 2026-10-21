@@ -73,12 +73,14 @@ or multiple per region or cloud provider.
 
 Every shard serves the *Admin workspace* at `/services/admin`: an
 installation-wide administrative view, reachable identically through any
-shard. Its first resource is an aggregated view of all `Shard` objects. The
-view is backed by the cache server, where every shard's `Shard` object is
-replicated, so all shards serve an identical view in a single
-`resourceVersion` space: consumers can fail over between shards and resume
-watches with the same resource version. Over time the Admin workspace is the
-home for further installation-wide admin surfaces.
+shard. Its resources are aggregated views of shard-owned objects: all
+`Shard` objects, and the `APIIdentity` registry (see
+[Core API identities](#core-api-identities)). The views are backed by the
+cache server, where every shard's objects are replicated, so all shards
+serve an identical view in a single `resourceVersion` space: consumers can
+fail over between shards and resume watches with the same resource version.
+Over time the Admin workspace is the home for further installation-wide
+admin surfaces.
 
 The view is writable for exactly one purpose: the allow-listed operational
 fields, currently the `experimental.core.kcp.io/unschedulable` annotation
@@ -106,6 +108,10 @@ $ kubectl get shards
 NAME      REGION      URL                      ...
 root      us-east-2   https://127.0.0.1:6444   ...
 shard-1   us-east-1   https://127.0.0.1:6445   ...
+$ kubectl get apiidentities
+NAME                       OWNER                  CORE   AGE
+system-tenancy.kcp.io      root|tenancy.kcp.io    true   3d
+2v9w7bq1rt2mdzn6-5f1c...   2v9w7bq1rt2mdzn6|net   false  2d
 ```
 
 Access requires membership in the `system:kcp:admin` group; the serving
@@ -415,11 +421,96 @@ workspaces, API bindings and more). These will need a number of standard
 informers both watching objects locally on that shard through wildcard informers
 and watching the corresponding cache server.
 
-Wildcard informers require the `APIExport` identity. This identity varies by
-installation as it is cryptographically created during creation of the `APIExport`.
+Wildcard informers require the `APIExport` identity. The core APIs
+(`tenancy.kcp.io`, `topology.kcp.io`, `shards.core.kcp.io`,
+`migration.kcp.io`, `cache.kcp.io`) have their `APIExport` in the root
+logical cluster, so every shard, the front-proxy and the virtual-workspaces
+server need these identities before they can do any work. How they get them
+is described next; after retrieving them the informers can be started.
 
-The core and tenancy APIs have their `APIExport` in the root logical cluster.
-A new shard will connect to that root logical cluster in order to extract the
-identities for these APIs. It will cache these for later use in case of a network
-partition or unavailability of the root shard. After retrieving these identities
-the informers can be started.
+## Core API identities
+
+An identity is part of every cross-workspace request for a core API, e.g.
+`/clusters/*/apis/tenancy.kcp.io/v1alpha1/workspaces:<identity>`.
+Historically the root shard created the identities randomly on its first
+boot and every other component asked the root shard for them, so nothing
+could start while the root shard was down.
+
+With the `APIIdentityDecoupling` feature gate enabled, a fresh installation
+gives its core APIExports well-known identities (`system-tenancy.kcp.io`,
+`system-topology.kcp.io`, ...), so there is nothing to look up. Existing
+installations keep the random identities they have; nothing changes for them.
+Either way every identity is listed in the `APIIdentity` registry described
+below, which the cache server replicates to every shard and the Admin
+workspace serves, so shards, virtual-workspaces servers and the front-proxy
+find the core identities without the root shard.
+
+Where each component gets its identities, in order of preference:
+
+| Component | Sources |
+|---|---|
+| root shard | its own APIExports in the `root` workspace |
+| other shards | the deprecated `apiexport-identity-cache` ConfigMap (what the shard already uses) → the `APIIdentity` registry on the cache server → the root workspace's APIExports replicated to the cache server → the root shard via `--root-shard-kubeconfig-file` (legacy) |
+| virtual-workspaces | its shard's ConfigMap → the registry → the replicated root APIExports → the root workspace |
+| front-proxy | the `APIIdentity` registry in `:admin` of its peers → the root shard via `--root-kubeconfig` (legacy) |
+
+- An existing shard restarts without the root shard or the cache server as
+  long as its ConfigMap copy is there; the ConfigMap is deprecated and goes
+  away with `secretRef`.
+- A new shard gets the identities from the cache server.
+- The front-proxy starts and reports itself live right away. It only becomes
+  ready once it has the identities (readiness check `core-identities`).
+
+### `APIIdentity`
+
+Every APIExport identity in the installation, core or not, is listed as an
+`APIIdentity` named after the identity value. The shard hosting the owning
+export derives it into its `system:shard` logical cluster; all shards' objects
+are replicated to the cache server and shown together in the Admin workspace:
+
+```sh
+$ kubectl ws use :admin
+$ kubectl get apiidentities
+NAME                          OWNER              CLUSTER   CORE    SHARED   LEGACY   AGE
+system-tenancy.kcp.io         tenancy.kcp.io     root      true                      3d
+2v9w7bq1rt2mdzn6-5f1c...      networking         2v9w...   false   True              2d
+```
+
+```yaml
+apiVersion: admin.kcp.io/v1alpha1
+kind: APIIdentity
+metadata:
+  name: 2v9w7bq1rt2mdzn6-5f1c...
+spec: {}                            # operator knobs of the legacy conversion only
+status:
+  owner: {cluster: 2v9w7bq1rt2mdzn6, export: networking}
+  groupResources:
+  - {group: networking.io, resource: vnets}
+  storageSharedWith:                # exports whose bindings sit on this prefix
+  - export: {cluster: 1k3f..., export: compute}
+    resources: [{group: networking.io, resource: vnets}]
+  conditions:
+  - type: StorageShared
+    status: "True"
+```
+
+The object outlives its export: when the owner is deleted it stays with
+`Orphaned: "True"` until no binding on the shard stores under the identity
+any more, so that no other export can pin the identity while consumers' data
+may still sit under it.
+
+Identities that several exports hold, which was possible by copying an
+identity secret, are reported with `LegacyShared: "True"` and
+`status.legacyHolders`. Nothing changes for them until an administrator asks
+for a conversion with `spec.convert: true` (the `APIIdentityDecoupling` feature
+gate must be enabled on the shards hosting the holders): the owner
+(`spec.owner`, by default the oldest holder) keeps the identity, every other
+holder gets a fresh identity and keeps serving its consumers' objects from the
+prefix of the formerly shared identity, so no data moves. Permission claims
+that named the shared identity for a converted holder's resources stop matching
+it and have to be updated by their owners. A converted export can later move
+its consumers' objects onto its own prefix with a
+[storage re-keying](../apis/storage-rekeying.md). `spec.convert: false` holds a
+conversion explicitly. Only `spec` may be written through the Admin workspace;
+everything else is derived.
+

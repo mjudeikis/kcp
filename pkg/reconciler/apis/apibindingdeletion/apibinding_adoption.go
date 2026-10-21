@@ -60,8 +60,11 @@ type retention struct {
 // deadlock the workspace in Terminating.
 //
 // Successor verification is same-storage only: the successor's APIExport must
-// serve the group/resource through the same APIResourceSchema (by UID) with
-// the same identity hash.
+// serve the group/resource through the same APIResourceSchema (by UID) from
+// the same storage prefix: either it holds the same identity, or its status
+// records the deleting binding's storage prefix for the resource (an export
+// converted from a legacy shared identity keeps serving from the prefix of
+// the identity it used to share).
 func (c *Controller) retainedResources(clusterName logicalcluster.Name, apibinding *apisv1alpha2.APIBinding) (map[schema.GroupResource]retention, error) {
 	retained := map[schema.GroupResource]retention{}
 
@@ -106,7 +109,7 @@ func (c *Controller) retainedResources(clusterName logicalcluster.Name, apibindi
 
 // successorFor returns the name of an APIBinding among candidates whose
 // referenced APIExport serves the given bound resource through the same
-// APIResourceSchema (by UID) with the same identity hash.
+// APIResourceSchema (by UID) from the same storage prefix.
 func (c *Controller) successorFor(clusterName logicalcluster.Name, candidates []*apisv1alpha2.APIBinding, br apisv1alpha2.BoundAPIResource) (string, bool) {
 	for _, b := range candidates {
 		if b.Spec.Reference.Export == nil {
@@ -123,13 +126,15 @@ func (c *Controller) successorFor(clusterName logicalcluster.Name, candidates []
 			// re-evaluates, so a transient cache miss only delays the handover.
 			continue
 		}
-		if export.Status.IdentityHash != br.Schema.IdentityHash {
+		if !exportStoresUnder(export, br) {
 			continue
 		}
 		for _, res := range export.Spec.Resources {
 			if res.Group != br.Group || res.Name != br.Resource {
 				continue
 			}
+			// the schema in effect: the export's own, or the source's for an
+			// adopted resource, as reconciled into status.
 			sch, err := c.getAPIResourceSchema(logicalcluster.From(export), res.Schema)
 			if err != nil {
 				continue
@@ -141,4 +146,29 @@ func (c *Controller) successorFor(clusterName logicalcluster.Name, candidates []
 	}
 
 	return "", false
+}
+
+// exportStoresUnder reports whether bindings of the export store the bound
+// resource's group/resource under the same prefix the bound resource uses:
+// the export holds that identity, or its reconciled storage status lists the
+// prefix for the resource (adopted storage).
+func exportStoresUnder(export *apisv1alpha2.APIExport, br apisv1alpha2.BoundAPIResource) bool {
+	key := br.StorageKey()
+	if export.Status.IdentityHash == key {
+		return true
+	}
+	if export.Status.Storage == nil {
+		return false
+	}
+	for _, rs := range export.Status.Storage.Resources {
+		if rs.Group != br.Group || rs.Resource != br.Resource {
+			continue
+		}
+		for _, k := range rs.Keys {
+			if k == key {
+				return true
+			}
+		}
+	}
+	return false
 }

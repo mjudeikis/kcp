@@ -27,9 +27,16 @@ import (
 //
 // APIExportStatus defines the observed state of APIExport.
 type APIExportStatusApplyConfiguration struct {
-	// identityHash is the hash of the API identity key of this APIExport. This value
-	// is immutable as soon as it is set.
+	// identityHash is the identity of this APIExport: an opaque, unique
+	// identifier that is also the default etcd storage prefix of its bound
+	// instances. It is assigned once by kcp and immutable afterwards.
 	IdentityHash *string `json:"identityHash,omitempty"`
+	// identity describes where the identity came from.
+	Identity *IdentityStatusApplyConfiguration `json:"identity,omitempty"`
+	// storage reports, per resource of this export, the storage prefixes its
+	// bindings use: the export's own identity in the steady state, the prefix
+	// of the formerly shared identity after a legacy conversion.
+	Storage *StorageStatusApplyConfiguration `json:"storage,omitempty"`
 	// conditions is a list of conditions that apply to the APIExport.
 	Conditions *v1alpha1.Conditions `json:"conditions,omitempty"`
 	// virtualWorkspaces contains all APIExport virtual workspace URLs.
@@ -52,6 +59,22 @@ func APIExportStatus() *APIExportStatusApplyConfiguration {
 // If called multiple times, the IdentityHash field is set to the value of the last call.
 func (b *APIExportStatusApplyConfiguration) WithIdentityHash(value string) *APIExportStatusApplyConfiguration {
 	b.IdentityHash = &value
+	return b
+}
+
+// WithIdentity sets the Identity field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Identity field is set to the value of the last call.
+func (b *APIExportStatusApplyConfiguration) WithIdentity(value *IdentityStatusApplyConfiguration) *APIExportStatusApplyConfiguration {
+	b.Identity = value
+	return b
+}
+
+// WithStorage sets the Storage field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Storage field is set to the value of the last call.
+func (b *APIExportStatusApplyConfiguration) WithStorage(value *StorageStatusApplyConfiguration) *APIExportStatusApplyConfiguration {
+	b.Storage = value
 	return b
 }
 

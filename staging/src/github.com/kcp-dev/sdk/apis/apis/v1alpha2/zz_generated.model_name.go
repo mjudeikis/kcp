@@ -82,6 +82,11 @@ func (in BoundAPIResourceSchema) OpenAPIModelName() string {
 }
 
 // OpenAPIModelName returns the OpenAPI model name for this type.
+func (in BoundAPIResourceStorage) OpenAPIModelName() string {
+	return "com.github.kcp-dev.sdk.apis.apis.v1alpha2.BoundAPIResourceStorage"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
 func (in ExportBindingReference) OpenAPIModelName() string {
 	return "com.github.kcp-dev.sdk.apis.apis.v1alpha2.ExportBindingReference"
 }
@@ -94,6 +99,11 @@ func (in GroupResource) OpenAPIModelName() string {
 // OpenAPIModelName returns the OpenAPI model name for this type.
 func (in Identity) OpenAPIModelName() string {
 	return "com.github.kcp-dev.sdk.apis.apis.v1alpha2.Identity"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
+func (in IdentityStatus) OpenAPIModelName() string {
+	return "com.github.kcp-dev.sdk.apis.apis.v1alpha2.IdentityStatus"
 }
 
 // OpenAPIModelName returns the OpenAPI model name for this type.
@@ -142,8 +152,18 @@ func (in ResourceSelector) OpenAPIModelName() string {
 }
 
 // OpenAPIModelName returns the OpenAPI model name for this type.
+func (in ResourceStorageStatus) OpenAPIModelName() string {
+	return "com.github.kcp-dev.sdk.apis.apis.v1alpha2.ResourceStorageStatus"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
 func (in ScopedPermissionClaim) OpenAPIModelName() string {
 	return "com.github.kcp-dev.sdk.apis.apis.v1alpha2.ScopedPermissionClaim"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
+func (in StorageStatus) OpenAPIModelName() string {
+	return "com.github.kcp-dev.sdk.apis.apis.v1alpha2.StorageStatus"
 }
 
 // OpenAPIModelName returns the OpenAPI model name for this type.

@@ -30,6 +30,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/klog/v2"
 
+	"github.com/kcp-dev/sdk/apis/admin"
 	"github.com/kcp-dev/sdk/apis/apis"
 	"github.com/kcp-dev/sdk/apis/cache"
 	"github.com/kcp-dev/sdk/apis/core"
@@ -60,6 +61,9 @@ func Bootstrap(ctx context.Context, crdClient apiextensionsclient.Interface, dis
 		{Group: apis.GroupName, Resource: "apiconversions"},
 		{Group: cache.GroupName, Resource: "clustercachedresources"},
 		{Group: cache.GroupName, Resource: "clustercachedresourceendpointslices"},
+		// the registry of APIExport identities, derived per shard into
+		// system:shard (enhancements KEP 0006).
+		{Group: admin.GroupName, Resource: "apiidentities"},
 	}
 
 	if err := wait.PollUntilContextCancel(ctx, time.Second, true, func(ctx context.Context) (bool, error) {

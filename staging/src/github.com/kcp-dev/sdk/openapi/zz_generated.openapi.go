@@ -28,7 +28,8 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
-	v1alpha1 "github.com/kcp-dev/sdk/apis/apis/v1alpha1"
+	v1alpha1 "github.com/kcp-dev/sdk/apis/admin/v1alpha1"
+	apisv1alpha1 "github.com/kcp-dev/sdk/apis/apis/v1alpha1"
 	v1alpha2 "github.com/kcp-dev/sdk/apis/apis/v1alpha2"
 	cachev1alpha1 "github.com/kcp-dev/sdk/apis/cache/v1alpha1"
 	corev1alpha1 "github.com/kcp-dev/sdk/apis/core/v1alpha1"
@@ -40,42 +41,48 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		v1alpha1.APIBinding{}.OpenAPIModelName():                                      schema_sdk_apis_apis_v1alpha1_APIBinding(ref),
-		v1alpha1.APIBindingList{}.OpenAPIModelName():                                  schema_sdk_apis_apis_v1alpha1_APIBindingList(ref),
-		v1alpha1.APIBindingSpec{}.OpenAPIModelName():                                  schema_sdk_apis_apis_v1alpha1_APIBindingSpec(ref),
-		v1alpha1.APIBindingStatus{}.OpenAPIModelName():                                schema_sdk_apis_apis_v1alpha1_APIBindingStatus(ref),
-		v1alpha1.APIConversion{}.OpenAPIModelName():                                   schema_sdk_apis_apis_v1alpha1_APIConversion(ref),
-		v1alpha1.APIConversionList{}.OpenAPIModelName():                               schema_sdk_apis_apis_v1alpha1_APIConversionList(ref),
-		v1alpha1.APIConversionRule{}.OpenAPIModelName():                               schema_sdk_apis_apis_v1alpha1_APIConversionRule(ref),
-		v1alpha1.APIConversionSpec{}.OpenAPIModelName():                               schema_sdk_apis_apis_v1alpha1_APIConversionSpec(ref),
-		v1alpha1.APIExport{}.OpenAPIModelName():                                       schema_sdk_apis_apis_v1alpha1_APIExport(ref),
-		v1alpha1.APIExportEndpointSlice{}.OpenAPIModelName():                          schema_sdk_apis_apis_v1alpha1_APIExportEndpointSlice(ref),
-		v1alpha1.APIExportEndpointSliceList{}.OpenAPIModelName():                      schema_sdk_apis_apis_v1alpha1_APIExportEndpointSliceList(ref),
-		v1alpha1.APIExportEndpointSliceSpec{}.OpenAPIModelName():                      schema_sdk_apis_apis_v1alpha1_APIExportEndpointSliceSpec(ref),
-		v1alpha1.APIExportEndpointSliceStatus{}.OpenAPIModelName():                    schema_sdk_apis_apis_v1alpha1_APIExportEndpointSliceStatus(ref),
-		v1alpha1.APIExportList{}.OpenAPIModelName():                                   schema_sdk_apis_apis_v1alpha1_APIExportList(ref),
-		v1alpha1.APIExportSpec{}.OpenAPIModelName():                                   schema_sdk_apis_apis_v1alpha1_APIExportSpec(ref),
-		v1alpha1.APIExportStatus{}.OpenAPIModelName():                                 schema_sdk_apis_apis_v1alpha1_APIExportStatus(ref),
-		v1alpha1.APIResourceSchema{}.OpenAPIModelName():                               schema_sdk_apis_apis_v1alpha1_APIResourceSchema(ref),
-		v1alpha1.APIResourceSchemaList{}.OpenAPIModelName():                           schema_sdk_apis_apis_v1alpha1_APIResourceSchemaList(ref),
-		v1alpha1.APIResourceSchemaSpec{}.OpenAPIModelName():                           schema_sdk_apis_apis_v1alpha1_APIResourceSchemaSpec(ref),
-		v1alpha1.APIResourceVersion{}.OpenAPIModelName():                              schema_sdk_apis_apis_v1alpha1_APIResourceVersion(ref),
-		v1alpha1.APIVersionConversion{}.OpenAPIModelName():                            schema_sdk_apis_apis_v1alpha1_APIVersionConversion(ref),
-		v1alpha1.AcceptablePermissionClaim{}.OpenAPIModelName():                       schema_sdk_apis_apis_v1alpha1_AcceptablePermissionClaim(ref),
-		v1alpha1.BindingReference{}.OpenAPIModelName():                                schema_sdk_apis_apis_v1alpha1_BindingReference(ref),
-		v1alpha1.BoundAPIResource{}.OpenAPIModelName():                                schema_sdk_apis_apis_v1alpha1_BoundAPIResource(ref),
-		v1alpha1.BoundAPIResourceSchema{}.OpenAPIModelName():                          schema_sdk_apis_apis_v1alpha1_BoundAPIResourceSchema(ref),
-		v1alpha1.CustomResourceConversion{}.OpenAPIModelName():                        schema_sdk_apis_apis_v1alpha1_CustomResourceConversion(ref),
-		v1alpha1.ExportBindingReference{}.OpenAPIModelName():                          schema_sdk_apis_apis_v1alpha1_ExportBindingReference(ref),
-		v1alpha1.GroupResource{}.OpenAPIModelName():                                   schema_sdk_apis_apis_v1alpha1_GroupResource(ref),
-		v1alpha1.Identity{}.OpenAPIModelName():                                        schema_sdk_apis_apis_v1alpha1_Identity(ref),
-		v1alpha1.LocalAPIExportPolicy{}.OpenAPIModelName():                            schema_sdk_apis_apis_v1alpha1_LocalAPIExportPolicy(ref),
-		v1alpha1.MaximalPermissionPolicy{}.OpenAPIModelName():                         schema_sdk_apis_apis_v1alpha1_MaximalPermissionPolicy(ref),
-		v1alpha1.PermissionClaim{}.OpenAPIModelName():                                 schema_sdk_apis_apis_v1alpha1_PermissionClaim(ref),
-		v1alpha1.ResourceSelector{}.OpenAPIModelName():                                schema_sdk_apis_apis_v1alpha1_ResourceSelector(ref),
-		v1alpha1.VirtualWorkspace{}.OpenAPIModelName():                                schema_sdk_apis_apis_v1alpha1_VirtualWorkspace(ref),
-		v1alpha1.WebhookClientConfig{}.OpenAPIModelName():                             schema_sdk_apis_apis_v1alpha1_WebhookClientConfig(ref),
-		v1alpha1.WebhookConversion{}.OpenAPIModelName():                               schema_sdk_apis_apis_v1alpha1_WebhookConversion(ref),
+		v1alpha1.APIIdentity{}.OpenAPIModelName():                                     schema_sdk_apis_admin_v1alpha1_APIIdentity(ref),
+		v1alpha1.APIIdentityList{}.OpenAPIModelName():                                 schema_sdk_apis_admin_v1alpha1_APIIdentityList(ref),
+		v1alpha1.APIIdentitySpec{}.OpenAPIModelName():                                 schema_sdk_apis_admin_v1alpha1_APIIdentitySpec(ref),
+		v1alpha1.APIIdentityStatus{}.OpenAPIModelName():                               schema_sdk_apis_admin_v1alpha1_APIIdentityStatus(ref),
+		v1alpha1.ExportIdentityReference{}.OpenAPIModelName():                         schema_sdk_apis_admin_v1alpha1_ExportIdentityReference(ref),
+		v1alpha1.StorageShare{}.OpenAPIModelName():                                    schema_sdk_apis_admin_v1alpha1_StorageShare(ref),
+		apisv1alpha1.APIBinding{}.OpenAPIModelName():                                  schema_sdk_apis_apis_v1alpha1_APIBinding(ref),
+		apisv1alpha1.APIBindingList{}.OpenAPIModelName():                              schema_sdk_apis_apis_v1alpha1_APIBindingList(ref),
+		apisv1alpha1.APIBindingSpec{}.OpenAPIModelName():                              schema_sdk_apis_apis_v1alpha1_APIBindingSpec(ref),
+		apisv1alpha1.APIBindingStatus{}.OpenAPIModelName():                            schema_sdk_apis_apis_v1alpha1_APIBindingStatus(ref),
+		apisv1alpha1.APIConversion{}.OpenAPIModelName():                               schema_sdk_apis_apis_v1alpha1_APIConversion(ref),
+		apisv1alpha1.APIConversionList{}.OpenAPIModelName():                           schema_sdk_apis_apis_v1alpha1_APIConversionList(ref),
+		apisv1alpha1.APIConversionRule{}.OpenAPIModelName():                           schema_sdk_apis_apis_v1alpha1_APIConversionRule(ref),
+		apisv1alpha1.APIConversionSpec{}.OpenAPIModelName():                           schema_sdk_apis_apis_v1alpha1_APIConversionSpec(ref),
+		apisv1alpha1.APIExport{}.OpenAPIModelName():                                   schema_sdk_apis_apis_v1alpha1_APIExport(ref),
+		apisv1alpha1.APIExportEndpointSlice{}.OpenAPIModelName():                      schema_sdk_apis_apis_v1alpha1_APIExportEndpointSlice(ref),
+		apisv1alpha1.APIExportEndpointSliceList{}.OpenAPIModelName():                  schema_sdk_apis_apis_v1alpha1_APIExportEndpointSliceList(ref),
+		apisv1alpha1.APIExportEndpointSliceSpec{}.OpenAPIModelName():                  schema_sdk_apis_apis_v1alpha1_APIExportEndpointSliceSpec(ref),
+		apisv1alpha1.APIExportEndpointSliceStatus{}.OpenAPIModelName():                schema_sdk_apis_apis_v1alpha1_APIExportEndpointSliceStatus(ref),
+		apisv1alpha1.APIExportList{}.OpenAPIModelName():                               schema_sdk_apis_apis_v1alpha1_APIExportList(ref),
+		apisv1alpha1.APIExportSpec{}.OpenAPIModelName():                               schema_sdk_apis_apis_v1alpha1_APIExportSpec(ref),
+		apisv1alpha1.APIExportStatus{}.OpenAPIModelName():                             schema_sdk_apis_apis_v1alpha1_APIExportStatus(ref),
+		apisv1alpha1.APIResourceSchema{}.OpenAPIModelName():                           schema_sdk_apis_apis_v1alpha1_APIResourceSchema(ref),
+		apisv1alpha1.APIResourceSchemaList{}.OpenAPIModelName():                       schema_sdk_apis_apis_v1alpha1_APIResourceSchemaList(ref),
+		apisv1alpha1.APIResourceSchemaSpec{}.OpenAPIModelName():                       schema_sdk_apis_apis_v1alpha1_APIResourceSchemaSpec(ref),
+		apisv1alpha1.APIResourceVersion{}.OpenAPIModelName():                          schema_sdk_apis_apis_v1alpha1_APIResourceVersion(ref),
+		apisv1alpha1.APIVersionConversion{}.OpenAPIModelName():                        schema_sdk_apis_apis_v1alpha1_APIVersionConversion(ref),
+		apisv1alpha1.AcceptablePermissionClaim{}.OpenAPIModelName():                   schema_sdk_apis_apis_v1alpha1_AcceptablePermissionClaim(ref),
+		apisv1alpha1.BindingReference{}.OpenAPIModelName():                            schema_sdk_apis_apis_v1alpha1_BindingReference(ref),
+		apisv1alpha1.BoundAPIResource{}.OpenAPIModelName():                            schema_sdk_apis_apis_v1alpha1_BoundAPIResource(ref),
+		apisv1alpha1.BoundAPIResourceSchema{}.OpenAPIModelName():                      schema_sdk_apis_apis_v1alpha1_BoundAPIResourceSchema(ref),
+		apisv1alpha1.CustomResourceConversion{}.OpenAPIModelName():                    schema_sdk_apis_apis_v1alpha1_CustomResourceConversion(ref),
+		apisv1alpha1.ExportBindingReference{}.OpenAPIModelName():                      schema_sdk_apis_apis_v1alpha1_ExportBindingReference(ref),
+		apisv1alpha1.GroupResource{}.OpenAPIModelName():                               schema_sdk_apis_apis_v1alpha1_GroupResource(ref),
+		apisv1alpha1.Identity{}.OpenAPIModelName():                                    schema_sdk_apis_apis_v1alpha1_Identity(ref),
+		apisv1alpha1.LocalAPIExportPolicy{}.OpenAPIModelName():                        schema_sdk_apis_apis_v1alpha1_LocalAPIExportPolicy(ref),
+		apisv1alpha1.MaximalPermissionPolicy{}.OpenAPIModelName():                     schema_sdk_apis_apis_v1alpha1_MaximalPermissionPolicy(ref),
+		apisv1alpha1.PermissionClaim{}.OpenAPIModelName():                             schema_sdk_apis_apis_v1alpha1_PermissionClaim(ref),
+		apisv1alpha1.ResourceSelector{}.OpenAPIModelName():                            schema_sdk_apis_apis_v1alpha1_ResourceSelector(ref),
+		apisv1alpha1.VirtualWorkspace{}.OpenAPIModelName():                            schema_sdk_apis_apis_v1alpha1_VirtualWorkspace(ref),
+		apisv1alpha1.WebhookClientConfig{}.OpenAPIModelName():                         schema_sdk_apis_apis_v1alpha1_WebhookClientConfig(ref),
+		apisv1alpha1.WebhookConversion{}.OpenAPIModelName():                           schema_sdk_apis_apis_v1alpha1_WebhookConversion(ref),
 		v1alpha2.APIBinding{}.OpenAPIModelName():                                      schema_sdk_apis_apis_v1alpha2_APIBinding(ref),
 		v1alpha2.APIBindingList{}.OpenAPIModelName():                                  schema_sdk_apis_apis_v1alpha2_APIBindingList(ref),
 		v1alpha2.APIBindingSpec{}.OpenAPIModelName():                                  schema_sdk_apis_apis_v1alpha2_APIBindingSpec(ref),
@@ -88,9 +95,11 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		v1alpha2.BindingReference{}.OpenAPIModelName():                                schema_sdk_apis_apis_v1alpha2_BindingReference(ref),
 		v1alpha2.BoundAPIResource{}.OpenAPIModelName():                                schema_sdk_apis_apis_v1alpha2_BoundAPIResource(ref),
 		v1alpha2.BoundAPIResourceSchema{}.OpenAPIModelName():                          schema_sdk_apis_apis_v1alpha2_BoundAPIResourceSchema(ref),
+		v1alpha2.BoundAPIResourceStorage{}.OpenAPIModelName():                         schema_sdk_apis_apis_v1alpha2_BoundAPIResourceStorage(ref),
 		v1alpha2.ExportBindingReference{}.OpenAPIModelName():                          schema_sdk_apis_apis_v1alpha2_ExportBindingReference(ref),
 		v1alpha2.GroupResource{}.OpenAPIModelName():                                   schema_sdk_apis_apis_v1alpha2_GroupResource(ref),
 		v1alpha2.Identity{}.OpenAPIModelName():                                        schema_sdk_apis_apis_v1alpha2_Identity(ref),
+		v1alpha2.IdentityStatus{}.OpenAPIModelName():                                  schema_sdk_apis_apis_v1alpha2_IdentityStatus(ref),
 		v1alpha2.LocalAPIExportPolicy{}.OpenAPIModelName():                            schema_sdk_apis_apis_v1alpha2_LocalAPIExportPolicy(ref),
 		v1alpha2.MaximalPermissionPolicy{}.OpenAPIModelName():                         schema_sdk_apis_apis_v1alpha2_MaximalPermissionPolicy(ref),
 		v1alpha2.PermissionClaim{}.OpenAPIModelName():                                 schema_sdk_apis_apis_v1alpha2_PermissionClaim(ref),
@@ -100,7 +109,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		v1alpha2.ResourceSchemaStorageCRD{}.OpenAPIModelName():                        schema_sdk_apis_apis_v1alpha2_ResourceSchemaStorageCRD(ref),
 		v1alpha2.ResourceSchemaStorageVirtual{}.OpenAPIModelName():                    schema_sdk_apis_apis_v1alpha2_ResourceSchemaStorageVirtual(ref),
 		v1alpha2.ResourceSelector{}.OpenAPIModelName():                                schema_sdk_apis_apis_v1alpha2_ResourceSelector(ref),
+		v1alpha2.ResourceStorageStatus{}.OpenAPIModelName():                           schema_sdk_apis_apis_v1alpha2_ResourceStorageStatus(ref),
 		v1alpha2.ScopedPermissionClaim{}.OpenAPIModelName():                           schema_sdk_apis_apis_v1alpha2_ScopedPermissionClaim(ref),
+		v1alpha2.StorageStatus{}.OpenAPIModelName():                                   schema_sdk_apis_apis_v1alpha2_StorageStatus(ref),
 		v1alpha2.VirtualWorkspace{}.OpenAPIModelName():                                schema_sdk_apis_apis_v1alpha2_VirtualWorkspace(ref),
 		cachev1alpha1.ClusterCachedResource{}.OpenAPIModelName():                      schema_sdk_apis_cache_v1alpha1_ClusterCachedResource(ref),
 		cachev1alpha1.ClusterCachedResourceEndpointSlice{}.OpenAPIModelName():         schema_sdk_apis_cache_v1alpha1_ClusterCachedResourceEndpointSlice(ref),
@@ -128,7 +139,13 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		corev1alpha1.ShardResourceLimits{}.OpenAPIModelName():                         schema_sdk_apis_core_v1alpha1_ShardResourceLimits(ref),
 		corev1alpha1.ShardSpec{}.OpenAPIModelName():                                   schema_sdk_apis_core_v1alpha1_ShardSpec(ref),
 		corev1alpha1.ShardStatus{}.OpenAPIModelName():                                 schema_sdk_apis_core_v1alpha1_ShardStatus(ref),
+		migrationv1alpha1.APIExportStorageRekey{}.OpenAPIModelName():                  schema_sdk_apis_migration_v1alpha1_APIExportStorageRekey(ref),
+		migrationv1alpha1.APIExportStorageRekeyList{}.OpenAPIModelName():              schema_sdk_apis_migration_v1alpha1_APIExportStorageRekeyList(ref),
+		migrationv1alpha1.APIExportStorageRekeySpec{}.OpenAPIModelName():              schema_sdk_apis_migration_v1alpha1_APIExportStorageRekeySpec(ref),
+		migrationv1alpha1.APIExportStorageRekeyStatus{}.OpenAPIModelName():            schema_sdk_apis_migration_v1alpha1_APIExportStorageRekeyStatus(ref),
+		migrationv1alpha1.ActiveRekey{}.OpenAPIModelName():                            schema_sdk_apis_migration_v1alpha1_ActiveRekey(ref),
 		migrationv1alpha1.EtcdEntry{}.OpenAPIModelName():                              schema_sdk_apis_migration_v1alpha1_EtcdEntry(ref),
+		migrationv1alpha1.ExportReference{}.OpenAPIModelName():                        schema_sdk_apis_migration_v1alpha1_ExportReference(ref),
 		migrationv1alpha1.LogicalClusterDump{}.OpenAPIModelName():                     schema_sdk_apis_migration_v1alpha1_LogicalClusterDump(ref),
 		migrationv1alpha1.LogicalClusterDumpSpec{}.OpenAPIModelName():                 schema_sdk_apis_migration_v1alpha1_LogicalClusterDumpSpec(ref),
 		migrationv1alpha1.LogicalClusterDumpStatus{}.OpenAPIModelName():               schema_sdk_apis_migration_v1alpha1_LogicalClusterDumpStatus(ref),
@@ -136,6 +153,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		migrationv1alpha1.LogicalClusterMigrationList{}.OpenAPIModelName():            schema_sdk_apis_migration_v1alpha1_LogicalClusterMigrationList(ref),
 		migrationv1alpha1.LogicalClusterMigrationSpec{}.OpenAPIModelName():            schema_sdk_apis_migration_v1alpha1_LogicalClusterMigrationSpec(ref),
 		migrationv1alpha1.LogicalClusterMigrationStatus{}.OpenAPIModelName():          schema_sdk_apis_migration_v1alpha1_LogicalClusterMigrationStatus(ref),
+		migrationv1alpha1.ShardMigrationProgress{}.OpenAPIModelName():                 schema_sdk_apis_migration_v1alpha1_ShardMigrationProgress(ref),
 		tenancyv1alpha1.APIExportReference{}.OpenAPIModelName():                       schema_sdk_apis_tenancy_v1alpha1_APIExportReference(ref),
 		tenancyv1alpha1.AuthenticationConfigurationReference{}.OpenAPIModelName():     schema_sdk_apis_tenancy_v1alpha1_AuthenticationConfigurationReference(ref),
 		tenancyv1alpha1.ClaimMappings{}.OpenAPIModelName():                            schema_sdk_apis_tenancy_v1alpha1_ClaimMappings(ref),
@@ -229,6 +247,301 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	}
 }
 
+func schema_sdk_apis_admin_v1alpha1_APIIdentity(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "APIIdentity is the installation-wide record of one APIExport or ClusterCachedResource identity: who owns it, what is served under it, who else stores on its prefix, and, for identities that were shared by several exports before identities became unique, how the conversion is going.\n\nThe object is named after the identity value. It is derived from the APIExports by the shard that hosts the owning export, written into that shard's shard-local system:shard logical cluster, replicated to the cache server and visible for the whole installation in the Admin workspace (kubectl ws use :admin). It outlives its owner: when the owner is deleted the object stays, Orphaned, until no binding stores under the identity any more, so that no other export can take the identity over while consumers' data still sits under it.\n\nEverything but spec is derived. spec holds the few operator knobs of the legacy conversion.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(v1.ObjectMeta{}.OpenAPIModelName()),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(v1alpha1.APIIdentitySpec{}.OpenAPIModelName()),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(v1alpha1.APIIdentityStatus{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			v1alpha1.APIIdentitySpec{}.OpenAPIModelName(), v1alpha1.APIIdentityStatus{}.OpenAPIModelName(), v1.ObjectMeta{}.OpenAPIModelName()},
+	}
+}
+
+func schema_sdk_apis_admin_v1alpha1_APIIdentityList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "APIIdentityList is a list of APIIdentity resources.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(v1.ListMeta{}.OpenAPIModelName()),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(v1alpha1.APIIdentity{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"metadata", "items"},
+			},
+		},
+		Dependencies: []string{
+			v1alpha1.APIIdentity{}.OpenAPIModelName(), v1.ListMeta{}.OpenAPIModelName()},
+	}
+}
+
+func schema_sdk_apis_admin_v1alpha1_APIIdentitySpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "APIIdentitySpec holds the operator knobs of the legacy conversion.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"owner": {
+						SchemaProps: spec.SchemaProps{
+							Description: "owner selects which holder of a legacy shared identity keeps it when the identity is converted; every other holder gets a fresh identity. Defaults to the oldest holder. Settable before conversion; ignored afterwards.",
+							Ref:         ref(v1alpha1.ExportIdentityReference{}.OpenAPIModelName()),
+						},
+					},
+					"convert": {
+						SchemaProps: spec.SchemaProps{
+							Description: "convert requests the conversion of a legacy shared identity when true: every holder but the owner moves onto a fresh identity and keeps its storage prefix. A shared identity is never converted automatically: unset or false, every holder keeps the identity and nothing changes.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			v1alpha1.ExportIdentityReference{}.OpenAPIModelName()},
+	}
+}
+
+func schema_sdk_apis_admin_v1alpha1_APIIdentityStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "APIIdentityStatus is derived from the APIExports.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"owner": {
+						SchemaProps: spec.SchemaProps{
+							Description: "owner is the export holding the identity. Empty when the identity is orphaned.",
+							Ref:         ref(v1alpha1.ExportIdentityReference{}.OpenAPIModelName()),
+						},
+					},
+					"groupResources": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "groupResources lists the resources served under this identity.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(v1alpha2.GroupResource{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"storageSharedWith": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "storageSharedWith lists other exports storing on this identity's prefix.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(v1alpha1.StorageShare{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"core": {
+						SchemaProps: spec.SchemaProps{
+							Description: "core is true for the identity of one of kcp's core exports in the root workspace.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"legacyHolders": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "legacyHolders lists every export holding this identity while it is shared. Set only for identities shared before identities became unique.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(v1alpha1.ExportIdentityReference{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"conditions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "conditions is a list of conditions that apply to the APIIdentity.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(conditionsv1alpha1.Condition{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			v1alpha1.ExportIdentityReference{}.OpenAPIModelName(), v1alpha1.StorageShare{}.OpenAPIModelName(), v1alpha2.GroupResource{}.OpenAPIModelName(), conditionsv1alpha1.Condition{}.OpenAPIModelName()},
+	}
+}
+
+func schema_sdk_apis_admin_v1alpha1_ExportIdentityReference(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ExportIdentityReference names an APIExport by logical cluster and name.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"cluster": {
+						SchemaProps: spec.SchemaProps{
+							Description: "cluster is the logical cluster name the export lives in.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"export": {
+						SchemaProps: spec.SchemaProps{
+							Description: "export is the name of the APIExport.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"cluster", "export"},
+			},
+		},
+	}
+}
+
+func schema_sdk_apis_admin_v1alpha1_StorageShare(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "StorageShare records an export whose bindings sit on this identity's prefix for some resources.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"export": {
+						SchemaProps: spec.SchemaProps{
+							Description: "export is the export storing on this identity's prefix.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(v1alpha1.ExportIdentityReference{}.OpenAPIModelName()),
+						},
+					},
+					"resources": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "resources lists the group/resources it stores there.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(v1alpha2.GroupResource{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"export"},
+			},
+		},
+		Dependencies: []string{
+			v1alpha1.ExportIdentityReference{}.OpenAPIModelName(), v1alpha2.GroupResource{}.OpenAPIModelName()},
+	}
+}
+
 func schema_sdk_apis_apis_v1alpha1_APIBinding(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -260,14 +573,14 @@ func schema_sdk_apis_apis_v1alpha1_APIBinding(ref common.ReferenceCallback) comm
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec holds the desired state.",
 							Default:     map[string]interface{}{},
-							Ref:         ref(v1alpha1.APIBindingSpec{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.APIBindingSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Status communicates the observed state.",
 							Default:     map[string]interface{}{},
-							Ref:         ref(v1alpha1.APIBindingStatus{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.APIBindingStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -275,7 +588,7 @@ func schema_sdk_apis_apis_v1alpha1_APIBinding(ref common.ReferenceCallback) comm
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.APIBindingSpec{}.OpenAPIModelName(), v1alpha1.APIBindingStatus{}.OpenAPIModelName(), v1.ObjectMeta{}.OpenAPIModelName()},
+			apisv1alpha1.APIBindingSpec{}.OpenAPIModelName(), apisv1alpha1.APIBindingStatus{}.OpenAPIModelName(), v1.ObjectMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -313,7 +626,7 @@ func schema_sdk_apis_apis_v1alpha1_APIBindingList(ref common.ReferenceCallback) 
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.APIBinding{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.APIBinding{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -324,7 +637,7 @@ func schema_sdk_apis_apis_v1alpha1_APIBindingList(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.APIBinding{}.OpenAPIModelName(), v1.ListMeta{}.OpenAPIModelName()},
+			apisv1alpha1.APIBinding{}.OpenAPIModelName(), v1.ListMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -339,7 +652,7 @@ func schema_sdk_apis_apis_v1alpha1_APIBindingSpec(ref common.ReferenceCallback) 
 						SchemaProps: spec.SchemaProps{
 							Description: "reference uniquely identifies an API to bind to.",
 							Default:     map[string]interface{}{},
-							Ref:         ref(v1alpha1.BindingReference{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.BindingReference{}.OpenAPIModelName()),
 						},
 					},
 					"permissionClaims": {
@@ -350,7 +663,7 @@ func schema_sdk_apis_apis_v1alpha1_APIBindingSpec(ref common.ReferenceCallback) 
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.AcceptablePermissionClaim{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.AcceptablePermissionClaim{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -361,7 +674,7 @@ func schema_sdk_apis_apis_v1alpha1_APIBindingSpec(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.AcceptablePermissionClaim{}.OpenAPIModelName(), v1alpha1.BindingReference{}.OpenAPIModelName()},
+			apisv1alpha1.AcceptablePermissionClaim{}.OpenAPIModelName(), apisv1alpha1.BindingReference{}.OpenAPIModelName()},
 	}
 }
 
@@ -396,7 +709,7 @@ func schema_sdk_apis_apis_v1alpha1_APIBindingStatus(ref common.ReferenceCallback
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.BoundAPIResource{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.BoundAPIResource{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -431,7 +744,7 @@ func schema_sdk_apis_apis_v1alpha1_APIBindingStatus(ref common.ReferenceCallback
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.PermissionClaim{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.PermissionClaim{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -445,7 +758,7 @@ func schema_sdk_apis_apis_v1alpha1_APIBindingStatus(ref common.ReferenceCallback
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.PermissionClaim{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.PermissionClaim{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -455,7 +768,7 @@ func schema_sdk_apis_apis_v1alpha1_APIBindingStatus(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.BoundAPIResource{}.OpenAPIModelName(), v1alpha1.PermissionClaim{}.OpenAPIModelName(), conditionsv1alpha1.Condition{}.OpenAPIModelName()},
+			apisv1alpha1.BoundAPIResource{}.OpenAPIModelName(), apisv1alpha1.PermissionClaim{}.OpenAPIModelName(), conditionsv1alpha1.Condition{}.OpenAPIModelName()},
 	}
 }
 
@@ -490,7 +803,7 @@ func schema_sdk_apis_apis_v1alpha1_APIConversion(ref common.ReferenceCallback) c
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec holds the desired state.",
 							Default:     map[string]interface{}{},
-							Ref:         ref(v1alpha1.APIConversionSpec{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.APIConversionSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -498,7 +811,7 @@ func schema_sdk_apis_apis_v1alpha1_APIConversion(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.APIConversionSpec{}.OpenAPIModelName(), v1.ObjectMeta{}.OpenAPIModelName()},
+			apisv1alpha1.APIConversionSpec{}.OpenAPIModelName(), v1.ObjectMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -536,7 +849,7 @@ func schema_sdk_apis_apis_v1alpha1_APIConversionList(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.APIConversion{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.APIConversion{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -547,7 +860,7 @@ func schema_sdk_apis_apis_v1alpha1_APIConversionList(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.APIConversion{}.OpenAPIModelName(), v1.ListMeta{}.OpenAPIModelName()},
+			apisv1alpha1.APIConversion{}.OpenAPIModelName(), v1.ListMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -612,7 +925,7 @@ func schema_sdk_apis_apis_v1alpha1_APIConversionSpec(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.APIVersionConversion{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.APIVersionConversion{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -623,7 +936,7 @@ func schema_sdk_apis_apis_v1alpha1_APIConversionSpec(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.APIVersionConversion{}.OpenAPIModelName()},
+			apisv1alpha1.APIVersionConversion{}.OpenAPIModelName()},
 	}
 }
 
@@ -658,21 +971,21 @@ func schema_sdk_apis_apis_v1alpha1_APIExport(ref common.ReferenceCallback) commo
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec holds the desired state.",
 							Default:     map[string]interface{}{},
-							Ref:         ref(v1alpha1.APIExportSpec{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.APIExportSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Status communicates the observed state.",
 							Default:     map[string]interface{}{},
-							Ref:         ref(v1alpha1.APIExportStatus{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.APIExportStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.APIExportSpec{}.OpenAPIModelName(), v1alpha1.APIExportStatus{}.OpenAPIModelName(), v1.ObjectMeta{}.OpenAPIModelName()},
+			apisv1alpha1.APIExportSpec{}.OpenAPIModelName(), apisv1alpha1.APIExportStatus{}.OpenAPIModelName(), v1.ObjectMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -707,21 +1020,21 @@ func schema_sdk_apis_apis_v1alpha1_APIExportEndpointSlice(ref common.ReferenceCa
 						SchemaProps: spec.SchemaProps{
 							Description: "spec holds the desired state: - the targeted APIExport - an optional partition for filtering",
 							Default:     map[string]interface{}{},
-							Ref:         ref(v1alpha1.APIExportEndpointSliceSpec{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.APIExportEndpointSliceSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Description: "status communicates the observed state: the filtered list of endpoints for the APIExport service.",
 							Default:     map[string]interface{}{},
-							Ref:         ref(v1alpha1.APIExportEndpointSliceStatus{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.APIExportEndpointSliceStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.APIExportEndpointSliceSpec{}.OpenAPIModelName(), v1alpha1.APIExportEndpointSliceStatus{}.OpenAPIModelName(), v1.ObjectMeta{}.OpenAPIModelName()},
+			apisv1alpha1.APIExportEndpointSliceSpec{}.OpenAPIModelName(), apisv1alpha1.APIExportEndpointSliceStatus{}.OpenAPIModelName(), v1.ObjectMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -759,7 +1072,7 @@ func schema_sdk_apis_apis_v1alpha1_APIExportEndpointSliceList(ref common.Referen
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.APIExportEndpointSlice{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.APIExportEndpointSlice{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -770,7 +1083,7 @@ func schema_sdk_apis_apis_v1alpha1_APIExportEndpointSliceList(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.APIExportEndpointSlice{}.OpenAPIModelName(), v1.ListMeta{}.OpenAPIModelName()},
+			apisv1alpha1.APIExportEndpointSlice{}.OpenAPIModelName(), v1.ListMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -785,7 +1098,7 @@ func schema_sdk_apis_apis_v1alpha1_APIExportEndpointSliceSpec(ref common.Referen
 						SchemaProps: spec.SchemaProps{
 							Description: "export points to the API export.",
 							Default:     map[string]interface{}{},
-							Ref:         ref(v1alpha1.ExportBindingReference{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.ExportBindingReference{}.OpenAPIModelName()),
 						},
 					},
 					"partition": {
@@ -800,7 +1113,7 @@ func schema_sdk_apis_apis_v1alpha1_APIExportEndpointSliceSpec(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.ExportBindingReference{}.OpenAPIModelName()},
+			apisv1alpha1.ExportBindingReference{}.OpenAPIModelName()},
 	}
 }
 
@@ -896,7 +1209,7 @@ func schema_sdk_apis_apis_v1alpha1_APIExportList(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.APIExport{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.APIExport{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -907,7 +1220,7 @@ func schema_sdk_apis_apis_v1alpha1_APIExportList(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.APIExport{}.OpenAPIModelName(), v1.ListMeta{}.OpenAPIModelName()},
+			apisv1alpha1.APIExport{}.OpenAPIModelName(), v1.ListMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -941,13 +1254,13 @@ func schema_sdk_apis_apis_v1alpha1_APIExportSpec(ref common.ReferenceCallback) c
 					"identity": {
 						SchemaProps: spec.SchemaProps{
 							Description: "identity points to a secret that contains the API identity in the 'key' file. The API identity determines an unique etcd prefix for objects stored via this APIExport.\n\nDifferent APIExport in a workspace can share a common identity, or have different ones. The identity (the secret) can also be transferred to another workspace when the APIExport is moved.\n\nThe identity is a secret of the API provider. The APIBindings referencing this APIExport will store a derived, non-sensitive value of this identity.\n\nThe identity of an APIExport cannot be changed. A derived, non-sensitive value of the identity key is stored in the APIExport status and this value is immutable.\n\nThe identity is defaulted. A secret with the name of the APIExport is automatically created.",
-							Ref:         ref(v1alpha1.Identity{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.Identity{}.OpenAPIModelName()),
 						},
 					},
 					"maximalPermissionPolicy": {
 						SchemaProps: spec.SchemaProps{
 							Description: "maximalPermissionPolicy will allow for a service provider to set an upper bound on what is allowed for a consumer of this API. If the policy is not set, no upper bound is applied, i.e the consuming users can do whatever the user workspace allows the user to do.\n\nThe policy consists of RBAC (Cluster)Roles and (Cluster)Bindings. A request of a user in a workspace that binds to this APIExport via an APIBinding is additionally checked against these rules, with the user name and the groups prefixed with `apis.kcp.io:binding:`.\n\nFor example: assume a user `adam` with groups `system:authenticated` and `a-team` binds to this APIExport in another workspace root:org:ws. Then a request in that workspace against a resource of this APIExport is authorized as every other request in that workspace, but in addition the RBAC policy here in the APIExport workspace has to grant access to the user `apis.kcp.io:binding:adam` with the groups `apis.kcp.io:binding:system:authenticated` and `apis.kcp.io:binding:a-team`.\n\nIf an APIExport with a maximalPermissionPolicy is deleted, these additional checks will no longer be applied to resources of this APIExport.\n\nFor example: Assume an APIExport with a maximalPermissionPolicy that only allows creation and deletion of resources, but not updates - if the APIExport is deleted users will be able to update the resources of the APIExport again (given the constraints of their workspace's RBAC policies).",
-							Ref:         ref(v1alpha1.MaximalPermissionPolicy{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.MaximalPermissionPolicy{}.OpenAPIModelName()),
 						},
 					},
 					"permissionClaims": {
@@ -967,7 +1280,7 @@ func schema_sdk_apis_apis_v1alpha1_APIExportSpec(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.PermissionClaim{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.PermissionClaim{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -977,7 +1290,7 @@ func schema_sdk_apis_apis_v1alpha1_APIExportSpec(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.Identity{}.OpenAPIModelName(), v1alpha1.MaximalPermissionPolicy{}.OpenAPIModelName(), v1alpha1.PermissionClaim{}.OpenAPIModelName()},
+			apisv1alpha1.Identity{}.OpenAPIModelName(), apisv1alpha1.MaximalPermissionPolicy{}.OpenAPIModelName(), apisv1alpha1.PermissionClaim{}.OpenAPIModelName()},
 	}
 }
 
@@ -1017,7 +1330,7 @@ func schema_sdk_apis_apis_v1alpha1_APIExportStatus(ref common.ReferenceCallback)
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.VirtualWorkspace{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.VirtualWorkspace{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1027,7 +1340,7 @@ func schema_sdk_apis_apis_v1alpha1_APIExportStatus(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.VirtualWorkspace{}.OpenAPIModelName(), conditionsv1alpha1.Condition{}.OpenAPIModelName()},
+			apisv1alpha1.VirtualWorkspace{}.OpenAPIModelName(), conditionsv1alpha1.Condition{}.OpenAPIModelName()},
 	}
 }
 
@@ -1062,14 +1375,14 @@ func schema_sdk_apis_apis_v1alpha1_APIResourceSchema(ref common.ReferenceCallbac
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec holds the desired state.",
 							Default:     map[string]interface{}{},
-							Ref:         ref(v1alpha1.APIResourceSchemaSpec{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.APIResourceSchemaSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.APIResourceSchemaSpec{}.OpenAPIModelName(), v1.ObjectMeta{}.OpenAPIModelName()},
+			apisv1alpha1.APIResourceSchemaSpec{}.OpenAPIModelName(), v1.ObjectMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -1107,7 +1420,7 @@ func schema_sdk_apis_apis_v1alpha1_APIResourceSchemaList(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.APIResourceSchema{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.APIResourceSchema{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1118,7 +1431,7 @@ func schema_sdk_apis_apis_v1alpha1_APIResourceSchemaList(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.APIResourceSchema{}.OpenAPIModelName(), v1.ListMeta{}.OpenAPIModelName()},
+			apisv1alpha1.APIResourceSchema{}.OpenAPIModelName(), v1.ListMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -1168,7 +1481,7 @@ func schema_sdk_apis_apis_v1alpha1_APIResourceSchemaSpec(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.APIResourceVersion{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.APIResourceVersion{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1184,7 +1497,7 @@ func schema_sdk_apis_apis_v1alpha1_APIResourceSchemaSpec(ref common.ReferenceCal
 					"conversion": {
 						SchemaProps: spec.SchemaProps{
 							Description: "conversion defines conversion settings for the defined custom resource.",
-							Ref:         ref(v1alpha1.CustomResourceConversion{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.CustomResourceConversion{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -1192,7 +1505,7 @@ func schema_sdk_apis_apis_v1alpha1_APIResourceSchemaSpec(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.APIResourceVersion{}.OpenAPIModelName(), v1alpha1.CustomResourceConversion{}.OpenAPIModelName(), "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1.CustomResourceDefinitionNames"},
+			apisv1alpha1.APIResourceVersion{}.OpenAPIModelName(), apisv1alpha1.CustomResourceConversion{}.OpenAPIModelName(), "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1.CustomResourceDefinitionNames"},
 	}
 }
 
@@ -1348,7 +1661,7 @@ func schema_sdk_apis_apis_v1alpha1_APIVersionConversion(ref common.ReferenceCall
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.APIConversionRule{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.APIConversionRule{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1374,7 +1687,7 @@ func schema_sdk_apis_apis_v1alpha1_APIVersionConversion(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.APIConversionRule{}.OpenAPIModelName()},
+			apisv1alpha1.APIConversionRule{}.OpenAPIModelName()},
 	}
 }
 
@@ -1415,7 +1728,7 @@ func schema_sdk_apis_apis_v1alpha1_AcceptablePermissionClaim(ref common.Referenc
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.ResourceSelector{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.ResourceSelector{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1440,7 +1753,7 @@ func schema_sdk_apis_apis_v1alpha1_AcceptablePermissionClaim(ref common.Referenc
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.ResourceSelector{}.OpenAPIModelName()},
+			apisv1alpha1.ResourceSelector{}.OpenAPIModelName()},
 	}
 }
 
@@ -1454,14 +1767,14 @@ func schema_sdk_apis_apis_v1alpha1_BindingReference(ref common.ReferenceCallback
 					"export": {
 						SchemaProps: spec.SchemaProps{
 							Description: "export is a reference to an APIExport by cluster name and export name. The creator of the APIBinding needs to have access to the APIExport with the verb `bind` in order to bind to it.",
-							Ref:         ref(v1alpha1.ExportBindingReference{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.ExportBindingReference{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.ExportBindingReference{}.OpenAPIModelName()},
+			apisv1alpha1.ExportBindingReference{}.OpenAPIModelName()},
 	}
 }
 
@@ -1492,7 +1805,7 @@ func schema_sdk_apis_apis_v1alpha1_BoundAPIResource(ref common.ReferenceCallback
 						SchemaProps: spec.SchemaProps{
 							Description: "Schema references the APIResourceSchema that is bound to this API.",
 							Default:     map[string]interface{}{},
-							Ref:         ref(v1alpha1.BoundAPIResourceSchema{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.BoundAPIResourceSchema{}.OpenAPIModelName()),
 						},
 					},
 					"storageVersions": {
@@ -1520,7 +1833,7 @@ func schema_sdk_apis_apis_v1alpha1_BoundAPIResource(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.BoundAPIResourceSchema{}.OpenAPIModelName()},
+			apisv1alpha1.BoundAPIResourceSchema{}.OpenAPIModelName()},
 	}
 }
 
@@ -1580,7 +1893,7 @@ func schema_sdk_apis_apis_v1alpha1_CustomResourceConversion(ref common.Reference
 					"webhook": {
 						SchemaProps: spec.SchemaProps{
 							Description: "webhook describes how to call the conversion webhook. Required when `strategy` is set to `\"Webhook\"`.",
-							Ref:         ref(v1alpha1.WebhookConversion{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.WebhookConversion{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -1588,7 +1901,7 @@ func schema_sdk_apis_apis_v1alpha1_CustomResourceConversion(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.WebhookConversion{}.OpenAPIModelName()},
+			apisv1alpha1.WebhookConversion{}.OpenAPIModelName()},
 	}
 }
 
@@ -1692,14 +2005,14 @@ func schema_sdk_apis_apis_v1alpha1_MaximalPermissionPolicy(ref common.ReferenceC
 					"local": {
 						SchemaProps: spec.SchemaProps{
 							Description: "local is the policy that is defined in same workspace as the API Export.",
-							Ref:         ref(v1alpha1.LocalAPIExportPolicy{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.LocalAPIExportPolicy{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.LocalAPIExportPolicy{}.OpenAPIModelName()},
+			apisv1alpha1.LocalAPIExportPolicy{}.OpenAPIModelName()},
 	}
 }
 
@@ -1740,7 +2053,7 @@ func schema_sdk_apis_apis_v1alpha1_PermissionClaim(ref common.ReferenceCallback)
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(v1alpha1.ResourceSelector{}.OpenAPIModelName()),
+										Ref:     ref(apisv1alpha1.ResourceSelector{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1758,7 +2071,7 @@ func schema_sdk_apis_apis_v1alpha1_PermissionClaim(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.ResourceSelector{}.OpenAPIModelName()},
+			apisv1alpha1.ResourceSelector{}.OpenAPIModelName()},
 	}
 }
 
@@ -1846,7 +2159,7 @@ func schema_sdk_apis_apis_v1alpha1_WebhookConversion(ref common.ReferenceCallbac
 					"clientConfig": {
 						SchemaProps: spec.SchemaProps{
 							Description: "clientConfig is the instructions for how to call the webhook if strategy is `Webhook`.",
-							Ref:         ref(v1alpha1.WebhookClientConfig{}.OpenAPIModelName()),
+							Ref:         ref(apisv1alpha1.WebhookClientConfig{}.OpenAPIModelName()),
 						},
 					},
 					"conversionReviewVersions": {
@@ -1874,7 +2187,7 @@ func schema_sdk_apis_apis_v1alpha1_WebhookConversion(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			v1alpha1.WebhookClientConfig{}.OpenAPIModelName()},
+			apisv1alpha1.WebhookClientConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -2315,9 +2628,21 @@ func schema_sdk_apis_apis_v1alpha2_APIExportStatus(ref common.ReferenceCallback)
 				Properties: map[string]spec.Schema{
 					"identityHash": {
 						SchemaProps: spec.SchemaProps{
-							Description: "identityHash is the hash of the API identity key of this APIExport. This value is immutable as soon as it is set.",
+							Description: "identityHash is the identity of this APIExport: an opaque, unique identifier that is also the default etcd storage prefix of its bound instances. It is assigned once by kcp and immutable afterwards.",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"identity": {
+						SchemaProps: spec.SchemaProps{
+							Description: "identity describes where the identity came from.",
+							Ref:         ref(v1alpha2.IdentityStatus{}.OpenAPIModelName()),
+						},
+					},
+					"storage": {
+						SchemaProps: spec.SchemaProps{
+							Description: "storage reports, per resource of this export, the storage prefixes its bindings use: the export's own identity in the steady state, the prefix of the formerly shared identity after a legacy conversion.",
+							Ref:         ref(v1alpha2.StorageStatus{}.OpenAPIModelName()),
 						},
 					},
 					"conditions": {
@@ -2352,7 +2677,7 @@ func schema_sdk_apis_apis_v1alpha2_APIExportStatus(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			v1alpha2.VirtualWorkspace{}.OpenAPIModelName(), conditionsv1alpha1.Condition{}.OpenAPIModelName()},
+			v1alpha2.IdentityStatus{}.OpenAPIModelName(), v1alpha2.StorageStatus{}.OpenAPIModelName(), v1alpha2.VirtualWorkspace{}.OpenAPIModelName(), conditionsv1alpha1.Condition{}.OpenAPIModelName()},
 	}
 }
 
@@ -2504,12 +2829,19 @@ func schema_sdk_apis_apis_v1alpha2_BoundAPIResource(ref common.ReferenceCallback
 							},
 						},
 					},
+					"storage": {
+						SchemaProps: spec.SchemaProps{
+							Description: "storage records the etcd prefix the bound instances of this resource live under. The prefix is independent of the export's identity: it is the identity by default, it differs while the export serves this resource out of another export's prefix (adopted storage), and it changes during a storage re-keying.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(v1alpha2.BoundAPIResourceStorage{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"group", "resource", "schema"},
 			},
 		},
 		Dependencies: []string{
-			v1alpha2.BoundAPIResourceSchema{}.OpenAPIModelName()},
+			v1alpha2.BoundAPIResourceSchema{}.OpenAPIModelName(), v1alpha2.BoundAPIResourceStorage{}.OpenAPIModelName()},
 	}
 }
 
@@ -2546,6 +2878,46 @@ func schema_sdk_apis_apis_v1alpha2_BoundAPIResourceSchema(ref common.ReferenceCa
 					},
 				},
 				Required: []string{"name", "UID", "identityHash"},
+			},
+		},
+	}
+}
+
+func schema_sdk_apis_apis_v1alpha2_BoundAPIResourceStorage(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "BoundAPIResourceStorage describes where the bound instances of a resource are stored.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"key": {
+						SchemaProps: spec.SchemaProps{
+							Description: "key is the etcd prefix segment currently serving this resource:\n\n\t/registry/<group>/<resource>/<key>/<cluster>/...\n\nEmpty means schema.identityHash (bindings created before storage keys were tracked); use StorageKey() to resolve it.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"pendingKeys": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "pendingKeys lists other prefixes under which instances of this resource may exist: the target of an in-progress re-keying before serving has flipped to it, and the drained-from prefixes after the flip until they are verified empty and deleted. It mirrors storageVersions for storage re-keying and is normally empty.\n\nKeys may not be removed while instances exist under them in storage.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -2613,13 +2985,20 @@ func schema_sdk_apis_apis_v1alpha2_Identity(ref common.ReferenceCallback) common
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Identity defines the identity of an APIExport, i.e. determines the etcd prefix data of this APIExport are stored under.",
+				Description: "Identity configures the identity of an APIExport: an opaque, unique, immutable identifier that is also the default etcd prefix of the export's bound instances. It is assigned by kcp and recorded in status.identityHash.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"secretRef": {
 						SchemaProps: spec.SchemaProps{
-							Description: "secretRef is a reference to a secret that contains the API identity in the 'key' file.",
+							Description: "secretRef is a reference to a secret that contains the API identity in the 'key' file.\n\nDeprecated: identities carry no secret. The field is honored once, for an export that has no identity yet, so flows that pre-create a secret to pin an identity keep landing on it; it is never created by kcp when the APIIdentityDecoupling feature gate is enabled, and it will be removed. Use value to pin an identity.",
 							Ref:         ref("k8s.io/api/core/v1.SecretReference"),
+						},
+					},
+					"value": {
+						SchemaProps: spec.SchemaProps{
+							Description: "value pins the identity of this export instead of letting kcp generate one. It is honored only while status.identityHash is empty. The value must be prefixed with the export's own logical cluster name followed by \"-\", so that ownership is checkable without a lookup, and must not be held by another export. Used to keep an identity across a delete-and-recreate of the export, e.g. by GitOps.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
@@ -2627,6 +3006,26 @@ func schema_sdk_apis_apis_v1alpha2_Identity(ref common.ReferenceCallback) common
 		},
 		Dependencies: []string{
 			"k8s.io/api/core/v1.SecretReference"},
+	}
+}
+
+func schema_sdk_apis_apis_v1alpha2_IdentityStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "IdentityStatus describes an export's identity.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"source": {
+						SchemaProps: spec.SchemaProps{
+							Description: "source says where the identity came from.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -2861,7 +3260,8 @@ func schema_sdk_apis_apis_v1alpha2_ResourceSchemaStorageCRD(ref common.Reference
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "ResourceSchemaStorageCRD configures crd storage.",
+				Type:        []string{"object"},
 			},
 		},
 	}
@@ -2911,6 +3311,55 @@ func schema_sdk_apis_apis_v1alpha2_ResourceSelector(ref common.ReferenceCallback
 						},
 					},
 				},
+			},
+		},
+	}
+}
+
+func schema_sdk_apis_apis_v1alpha2_ResourceStorageStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ResourceStorageStatus reports the storage prefixes of one resource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "group is the name of an API group. For core groups this is the empty string '\"\"'.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "resource is the name of the resource. A subresource may be claimed as \"resource/subresource\", e.g. \"serviceaccounts/token\", in the style of RBAC rules. Note: it is worth noting that you can not ask for permissions for resource provided by a CRD not provided by an api export.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"keys": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "keys lists the storage prefixes bindings of this resource use: the export's identity, or the formerly shared identity after a conversion.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"resource"},
 			},
 		},
 	}
@@ -2983,6 +3432,44 @@ func schema_sdk_apis_apis_v1alpha2_ScopedPermissionClaim(ref common.ReferenceCal
 		},
 		Dependencies: []string{
 			v1alpha2.PermissionClaimSelector{}.OpenAPIModelName()},
+	}
+}
+
+func schema_sdk_apis_apis_v1alpha2_StorageStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "StorageStatus reports the storage prefixes of an export's resources.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"resources": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-map-keys": []interface{}{
+									"group",
+									"resource",
+								},
+								"x-kubernetes-list-type": "map",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "resources lists, per resource, the storage prefixes its bindings use.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(v1alpha2.ResourceStorageStatus{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			v1alpha2.ResourceStorageStatus{}.OpenAPIModelName()},
 	}
 }
 
@@ -4217,6 +4704,289 @@ func schema_sdk_apis_core_v1alpha1_ShardStatus(ref common.ReferenceCallback) com
 	}
 }
 
+func schema_sdk_apis_migration_v1alpha1_APIExportStorageRekey(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "APIExportStorageRekey is a one-shot request to move the bound instances of an APIExport's resources onto another etcd storage prefix. It lives next to the APIExport in the provider workspace, or in a platform-operated workspace referencing the export by path, and is served through the platform-owned migration APIExport: possessing the type requires binding that export, which is how the platform delegates the capability.\n\nThe identity of the export never changes. Only the storage prefix of the bound instances does: by default the export's own identity, which is the steady state, so a re-keying ends a storage handover (an export serving a resource out of another export's prefix) or separates prefixes after one.\n\nRe-keying is a tracked, resumable procedure: every consumer workspace's bound instances are drained storage-level from the current prefix to the target one (preserving UIDs, status and ownerReferences), one workspace at a time, behind the workspace's maintenance fence.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(v1.ObjectMeta{}.OpenAPIModelName()),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(migrationv1alpha1.APIExportStorageRekeySpec{}.OpenAPIModelName()),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(migrationv1alpha1.APIExportStorageRekeyStatus{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"spec"},
+			},
+		},
+		Dependencies: []string{
+			migrationv1alpha1.APIExportStorageRekeySpec{}.OpenAPIModelName(), migrationv1alpha1.APIExportStorageRekeyStatus{}.OpenAPIModelName(), v1.ObjectMeta{}.OpenAPIModelName()},
+	}
+}
+
+func schema_sdk_apis_migration_v1alpha1_APIExportStorageRekeyList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "APIExportStorageRekeyList is a list of APIExportStorageRekey resources.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(v1.ListMeta{}.OpenAPIModelName()),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(migrationv1alpha1.APIExportStorageRekey{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"metadata", "items"},
+			},
+		},
+		Dependencies: []string{
+			migrationv1alpha1.APIExportStorageRekey{}.OpenAPIModelName(), v1.ListMeta{}.OpenAPIModelName()},
+	}
+}
+
+func schema_sdk_apis_migration_v1alpha1_APIExportStorageRekeySpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "APIExportStorageRekeySpec is the request: which export, which of its resources, and onto which storage key.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"export": {
+						SchemaProps: spec.SchemaProps{
+							Description: "export references the APIExport whose bound instances are re-keyed. The referenced export may live in another workspace (and on another shard): re-keying is a platform capability, delegated by binding the migration.kcp.io APIExport, and does not require exposing that capability in the workspaces owning the re-keyed exports. Immutable.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(migrationv1alpha1.ExportReference{}.OpenAPIModelName()),
+						},
+					},
+					"resources": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-map-keys": []interface{}{
+									"group",
+									"resource",
+								},
+								"x-kubernetes-list-type": "map",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "resources limits the re-keying to the listed group/resources of the export. Empty means every CRD-stored resource of the export whose bindings sit on a prefix other than the target. Immutable.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(v1alpha2.GroupResource{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"targetKey": {
+						SchemaProps: spec.SchemaProps{
+							Description: "targetKey is the storage key to drain onto. Empty means the export's own identity, which is the steady state. Any other value is reserved for platform administrators, e.g. to move onto a well-known core identity. It is a single etcd path segment. Immutable.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"export"},
+			},
+		},
+		Dependencies: []string{
+			v1alpha2.GroupResource{}.OpenAPIModelName(), migrationv1alpha1.ExportReference{}.OpenAPIModelName()},
+	}
+}
+
+func schema_sdk_apis_migration_v1alpha1_APIExportStorageRekeyStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "APIExportStorageRekeyStatus reports drain progress.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Description: "phase is the current lifecycle phase of the re-keying.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"targetKey": {
+						SchemaProps: spec.SchemaProps{
+							Description: "targetKey is the resolved storage key the bindings are drained onto.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"migratedBindings": {
+						SchemaProps: spec.SchemaProps{
+							Description: "migratedBindings is the number of APIBindings whose bound instances are fully drained onto the target key, summed over all shards that have reported in status.shards.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"totalBindings": {
+						SchemaProps: spec.SchemaProps{
+							Description: "totalBindings is the number of APIBindings bound to the re-keyed export, summed over all shards that have reported in status.shards.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"shards": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-map-keys": []interface{}{
+									"shard",
+								},
+								"x-kubernetes-list-type": "map",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "shards reports drain progress per shard. Each shard's storage migrator maintains its own entry (including shards with zero bindings, so completeness is decidable). The drain is only considered complete once every shard has reported and every entry is fully migrated.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(migrationv1alpha1.ShardMigrationProgress{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"conditions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "conditions is a list of conditions that apply to the re-keying.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(conditionsv1alpha1.Condition{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			migrationv1alpha1.ShardMigrationProgress{}.OpenAPIModelName(), conditionsv1alpha1.Condition{}.OpenAPIModelName()},
+	}
+}
+
+func schema_sdk_apis_migration_v1alpha1_ActiveRekey(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ActiveRekey is the parsed value of the ActiveRekeyAnnotationKey annotation.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"Cluster": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Cluster is the logical cluster name the re-keying object lives in.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"Name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name is the name of the re-keying object.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"TargetKey": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TargetKey is the storage key the bindings are drained onto.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"Resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources limits the re-keying to the listed group/resources. Empty means every CRD-stored resource of the export.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(v1alpha2.GroupResource{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"Cluster", "Name", "TargetKey", "Resources"},
+			},
+		},
+		Dependencies: []string{
+			v1alpha2.GroupResource{}.OpenAPIModelName()},
+	}
+}
+
 func schema_sdk_apis_migration_v1alpha1_EtcdEntry(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -4248,6 +5018,35 @@ func schema_sdk_apis_migration_v1alpha1_EtcdEntry(ref common.ReferenceCallback) 
 					},
 				},
 				Required: []string{"key", "value"},
+			},
+		},
+	}
+}
+
+func schema_sdk_apis_migration_v1alpha1_ExportReference(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ExportReference identifies the APIExport being re-keyed.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "path is the workspace path of the APIExport (e.g. root:org:provider, or a logical cluster name). Empty means the re-keying's own workspace.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "name is the name of the APIExport.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"name"},
 			},
 		},
 	}
@@ -4568,6 +5367,59 @@ func schema_sdk_apis_migration_v1alpha1_LogicalClusterMigrationStatus(ref common
 		},
 		Dependencies: []string{
 			conditionsv1alpha1.Condition{}.OpenAPIModelName()},
+	}
+}
+
+func schema_sdk_apis_migration_v1alpha1_ShardMigrationProgress(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ShardMigrationProgress is one shard's self-reported drain progress for a re-keying. It is written by the storage migrator running on that shard via server-side apply, with a per-shard field manager, so shards never conflict with each other or with the re-keying controller.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"shard": {
+						SchemaProps: spec.SchemaProps{
+							Description: "shard is the name of the reporting shard.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"storageKey": {
+						SchemaProps: spec.SchemaProps{
+							Description: "storageKey is the target key the counts were evaluated against. Reports for any other key than the re-keying's target are ignored by the re-keying controller.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"totalBindings": {
+						SchemaProps: spec.SchemaProps{
+							Description: "totalBindings is the number of APIBindings of the re-keyed export hosted on this shard. Zero is meaningful (\"this shard has nothing to drain\") and always serialized.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"migratedBindings": {
+						SchemaProps: spec.SchemaProps{
+							Description: "migratedBindings is the number of those bindings fully drained onto the target key.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"lastUpdateTime": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastUpdateTime is when this shard last refreshed its entry.",
+							Ref:         ref(v1.Time{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"shard", "totalBindings", "migratedBindings"},
+			},
+		},
+		Dependencies: []string{
+			v1.Time{}.OpenAPIModelName()},
 	}
 }
 

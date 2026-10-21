@@ -29,6 +29,7 @@ import (
 
 	"github.com/kcp-dev/logicalcluster/v3"
 
+	"github.com/kcp-dev/kcp/pkg/indexers"
 	"github.com/kcp-dev/kcp/pkg/reconciler/apis/apibinding"
 )
 
@@ -70,7 +71,15 @@ func (c *Controller) ensureBoundCRDs(ctx context.Context, lcName logicalcluster.
 				return fmt.Errorf("failed to get APIResourceSchema %s in %s: %w", resource.Schema, exportPath, err)
 			}
 
+			// the bound CRD name depends on the storage key the binding uses;
+			// a binding on the export's identity uses the schema UID.
 			boundCRDName := apibinding.BoundCRDName(schema)
+			for _, br := range binding.Status.BoundResources {
+				if br.Group == resource.Group && br.Resource == resource.Name {
+					boundCRDName = indexers.BoundCRDNameFor(br)
+					break
+				}
+			}
 			boundCRDNames.Insert(boundCRDName)
 
 			// Try to get the bound CRD.
@@ -84,7 +93,7 @@ func (c *Controller) ensureBoundCRDs(ctx context.Context, lcName logicalcluster.
 			}
 
 			// Need to create bound CRD.
-			crd, err := apibinding.GenerateBoundCRD(schema)
+			crd, err := apibinding.GenerateBoundCRDNamed(schema, boundCRDName)
 			if err != nil {
 				return fmt.Errorf("failed to generate bound CRD from schema %s: %w", resource.Schema, err)
 			}

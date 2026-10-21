@@ -159,18 +159,34 @@ In kcp, however, it is possible for multiple API providers to each define the sa
 _without interference_! This is where `APIExport` "identity" becomes critical.
 
 When you create an `APIExport` and you don't specify its identity (as is the case in the `example.kcp.io` example
-above), kcp automatically generates one for you. The identity is always stored in a secret in the same workspace as
-the `APIExport.` By default, it is created in the `kcp-system` namespace in a secret whose name is the name of
-the `APIExport`.
+above), kcp automatically generates one for you and records it in `status.identityHash`. The identity is an opaque,
+unique identifier that never changes for the lifetime of the export. It is public: it appears in every consumer's
+`APIBinding` status and in permission claims that reference your resources, and there are times when other API
+providers need to know and reference it.
 
-An `APIExport`'s identity is similar to a private key; you should never share it with anyone.
-
-The identity's **hash** is similar to a public key; it is not private and there are times when other consumers of your
-exported APIs need to know and reference it.
-
-Given 2 Workspaces, each with its own `APIExport` that exports `widgets.example.kcp.io`, kcp uses the identity hash (in
+Given 2 Workspaces, each with its own `APIExport` that exports `widgets.example.kcp.io`, kcp uses the identity (in
 a mostly transparent manner) to ensure the correct instances associated with the appropriate `APIResourceSchema` are
 served to clients. See [Build Your Controller](#build-your-controller) for more information.
+
+Knowing an identity grants nothing by itself: claiming a resource needs the consumer's acceptance and passes the
+claimed export's maximal permission policy, and serving a resource under an identity is reserved to the export that
+holds it. `status.identityHash` is immutable once set.
+
+Historically the identity was derived from a secret in the `kcp-system` namespace of the export's workspace, and
+`spec.identity.secretRef` could point to a pre-created secret to pin it. The secret protected nothing and is
+deprecated. With the `APIIdentityDecoupling` feature gate enabled (alpha, off by default) kcp no longer creates
+secrets: identities are generated as `<logical cluster name>-<random>`, kcp's core exports in `root` use well-known
+identities such as `system-tenancy.kcp.io`, and an export can pin its identity instead with `spec.identity.value`.
+The value must be prefixed with the export's own logical cluster name followed by `-` and must not be held by
+another export; it is honored only while the export has no identity yet. This is how a GitOps flow keeps consumers'
+data across a delete-and-recreate of the export.
+
+Every identity is listed in the Admin workspace as an `APIIdentity` (`kubectl ws use :admin; kubectl get
+apiidentities`): who owns it, what is served under it and who else stores on its prefix. An `APIIdentity` outlives its
+export while consumers' data may still sit under the identity, so nobody else can take it over in the meantime.
+
+The identity never changes. What can move is the storage of an export's bound instances, with a
+[storage re-keying](storage-rekeying.md); the identity stays what it is while the data moves.
 
 ### Permission Claims
 

@@ -38,6 +38,11 @@ const (
 	// APIExportByClaimedIdentities is the indexer name for retrieving APIExports that have a permission claim for a
 	// particular identity hash.
 	APIExportByClaimedIdentities = "APIExportByClaimedIdentities"
+	// APIExportByStorageKey is the indexer name for retrieving APIExports by
+	// the storage prefixes their resources are reported to use
+	// (status.storage.resources[].keys): the export's own identity, or the
+	// source's identity for an adopted resource.
+	APIExportByStorageKey = "APIExportByStorageKey"
 	// APIExportEndpointSliceByAPIExport is the indexer name for retrieving APIExportEndpointSlices by their APIExport's Reference Path and Name.
 	APIExportEndpointSliceByAPIExport = "APIExportEndpointSliceByAPIExport"
 
@@ -48,28 +53,6 @@ const (
 	APIExportByAPIResourceSchema = "apiExportsByAPIResourceSchema"
 )
 
-// IndexAPIExportByAPIResourceSchema is an index function that maps an APIExport to the
-// cluster-aware keys of every APIResourceSchema it references in Spec.Resources. The key
-// format is "<schemaCluster>|<schemaName>", matching client.ToClusterAwareKey output.
-func IndexAPIExportByAPIResourceSchema(obj interface{}) ([]string, error) {
-	apiExport, ok := obj.(*apisv1alpha2.APIExport)
-	if !ok {
-		return []string{}, fmt.Errorf("obj %T is not an APIExport", obj)
-	}
-	cluster := logicalcluster.From(apiExport).Path()
-	ret := make([]string, 0, len(apiExport.Spec.Resources))
-	for _, resourceSchema := range apiExport.Spec.Resources {
-		ret = append(ret, sdkclient.ToClusterAwareKey(cluster, resourceSchema.Schema))
-	}
-	return ret, nil
-}
-
-// IndexAPIExportByIdentity is an index function that indexes an APIExport by its identity hash.
-func IndexAPIExportByIdentity(obj interface{}) ([]string, error) {
-	apiExport := obj.(*apisv1alpha2.APIExport)
-	return []string{apiExport.Status.IdentityHash}, nil
-}
-
 // IndexAPIExportBySecret is an index function that indexes an APIExport by its identity secret references. Index values
 // are of the form <cluster name>|<secret reference namespace>/<secret reference name> (cache keys).
 func IndexAPIExportBySecret(obj interface{}) ([]string, error) {
@@ -79,7 +62,7 @@ func IndexAPIExportBySecret(obj interface{}) ([]string, error) {
 		return []string{}, nil
 	}
 
-	ref := apiExport.Spec.Identity.SecretRef
+	ref := apiExport.Spec.Identity.SecretRef //nolint:staticcheck // secretRef is honored during its deprecation window
 	if ref == nil {
 		return []string{}, nil
 	}
@@ -96,10 +79,29 @@ func IndexAPIExportBySecret(obj interface{}) ([]string, error) {
 func IndexAPIExportByClaimedIdentities(obj interface{}) ([]string, error) {
 	apiExport := obj.(*apisv1alpha2.APIExport)
 	claimedIdentities := sets.New[string]()
+	// resolved claims: a claim naming an export or resolved through a grant
+	// carries its identity in status only.
 	for _, claim := range apiExport.Spec.PermissionClaims {
 		claimedIdentities.Insert(claim.IdentityHash)
 	}
 	return sets.List[string](claimedIdentities), nil
+}
+
+// IndexAPIExportByStorageKey indexes an APIExport by every storage prefix its
+// resources are reported to use.
+func IndexAPIExportByStorageKey(obj interface{}) ([]string, error) {
+	apiExport, ok := obj.(*apisv1alpha2.APIExport)
+	if !ok {
+		return []string{}, fmt.Errorf("obj %T is not an APIExport", obj)
+	}
+	if apiExport.Status.Storage == nil {
+		return []string{}, nil
+	}
+	keys := sets.New[string]()
+	for _, rs := range apiExport.Status.Storage.Resources {
+		keys.Insert(rs.Keys...)
+	}
+	return sets.List(keys), nil
 }
 
 // IndexAPIExportEndpointSliceByAPIExportFunc indexes the APIExportEndpointSlice by their APIExport's Reference Path and Name.
@@ -138,4 +140,26 @@ func IndexAPIExportByVirtualResourceFingerprint(obj interface{}) ([]string, erro
 	}
 
 	return sets.List(keys), nil
+}
+
+// IndexAPIExportByAPIResourceSchema is an index function that maps an APIExport to its referenced APIResourceSchemas.
+func IndexAPIExportByAPIResourceSchema(obj interface{}) ([]string, error) {
+	apiExport, ok := obj.(*apisv1alpha2.APIExport)
+	if !ok {
+		return []string{}, fmt.Errorf("obj %T is not an APIExport", obj)
+	}
+
+	cluster := logicalcluster.From(apiExport).Path()
+	ret := make([]string, 0, len(apiExport.Spec.Resources))
+	for _, resourceSchema := range apiExport.Spec.Resources {
+		ret = append(ret, sdkclient.ToClusterAwareKey(cluster, resourceSchema.Schema))
+	}
+
+	return ret, nil
+}
+
+// IndexAPIExportByIdentity is an index function that indexes an APIExport by its identity hash.
+func IndexAPIExportByIdentity(obj interface{}) ([]string, error) {
+	apiExport := obj.(*apisv1alpha2.APIExport)
+	return []string{apiExport.Status.IdentityHash}, nil
 }

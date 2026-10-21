@@ -144,8 +144,18 @@ func Run(ctx context.Context, o *options.Options) error {
 		return err
 	}
 
-	// resolve identities for system APIBindings
-	identityConfig, resolveIdentities, coreIdentityHandler := bootstrap.NewConfigWithWildcardIdentities(nonIdentityConfig, bootstrap.KcpRootGroupExportNames, bootstrap.KcpRootGroupResourceExportNames, localShardKubeClusterClient)
+	// resolve identities for system APIBindings: from the deprecated identity
+	// cache ConfigMap first, then the cache server (the APIIdentity registry
+	// and the replicated root APIExports), and finally the root workspace
+	// (only served on the root shard).
+	identityProvider := bootstrap.Chain(
+		bootstrap.LegacyConfigMapProvider(localShardKubeClusterClient),
+		bootstrap.APIIdentityProvider(cacheKcpClusterClient),
+		bootstrap.CacheProvider(cacheKcpClusterClient),
+		bootstrap.RootAPIExportProvider(nonIdentityConfig),
+	)
+	identityConfig, resolveIdentities, identities := bootstrap.NewConfigWithWildcardIdentities(nonIdentityConfig, bootstrap.KcpRootGroupExportNames, bootstrap.KcpRootGroupResourceExportNames, identityProvider)
+	coreIdentityHandler := identities.APIExportHandler()
 	var identityErr error
 	if err := wait.PollUntilContextCancel(ctx, time.Millisecond*500, true, func(ctx context.Context) (bool, error) {
 		if err := resolveIdentities(ctx); err != nil {

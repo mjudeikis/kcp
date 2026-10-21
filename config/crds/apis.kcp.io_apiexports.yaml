@@ -342,8 +342,14 @@ spec:
                   created.
                 properties:
                   secretRef:
-                    description: secretRef is a reference to a secret that contains
-                      the API identity in the 'key' file.
+                    description: |-
+                      secretRef is a reference to a secret that contains the API identity in the 'key' file.
+
+                      Deprecated: identities carry no secret. The field is honored once, for
+                      an export that has no identity yet, so flows that pre-create a secret to
+                      pin an identity keep landing on it; it is never created by kcp when the
+                      APIIdentityDecoupling feature gate is enabled, and it will be removed.
+                      Use value to pin an identity.
                     properties:
                       name:
                         description: name is unique within a namespace to reference
@@ -355,6 +361,17 @@ spec:
                         type: string
                     type: object
                     x-kubernetes-map-type: atomic
+                  value:
+                    description: |-
+                      value pins the identity of this export instead of letting kcp generate
+                      one. It is honored only while status.identityHash is empty. The value
+                      must be prefixed with the export's own logical cluster name followed by
+                      "-", so that ownership is checkable without a lookup, and must not be
+                      held by another export. Used to keep an identity across a
+                      delete-and-recreate of the export, e.g. by GitOps.
+                    maxLength: 253
+                    pattern: ^([a-z0-9][a-z0-9.-]*)?$
+                    type: string
                 type: object
               maximalPermissionPolicy:
                 description: |-
@@ -534,11 +551,6 @@ spec:
                       default:
                         crd: {}
                       description: Storage defines how the resource is stored.
-                      oneOf:
-                      - required:
-                        - crd
-                      - required:
-                        - virtual
                       properties:
                         crd:
                           description: |-
@@ -644,11 +656,72 @@ spec:
                   - type
                   type: object
                 type: array
+              identity:
+                description: identity describes where the identity came from.
+                properties:
+                  source:
+                    description: source says where the identity came from.
+                    enum:
+                    - Generated
+                    - Pinned
+                    - Legacy
+                    - WellKnown
+                    - Converted
+                    type: string
+                type: object
               identityHash:
                 description: |-
-                  identityHash is the hash of the API identity key of this APIExport. This value
-                  is immutable as soon as it is set.
+                  identityHash is the identity of this APIExport: an opaque, unique
+                  identifier that is also the default etcd storage prefix of its bound
+                  instances. It is assigned once by kcp and immutable afterwards.
                 type: string
+              storage:
+                description: |-
+                  storage reports, per resource of this export, the storage prefixes its
+                  bindings use: the export's own identity in the steady state, the prefix
+                  of the formerly shared identity after a legacy conversion.
+                properties:
+                  resources:
+                    description: resources lists, per resource, the storage prefixes
+                      its bindings use.
+                    items:
+                      description: ResourceStorageStatus reports the storage prefixes
+                        of one resource.
+                      properties:
+                        group:
+                          default: ""
+                          description: |-
+                            group is the name of an API group.
+                            For core groups this is the empty string '""'.
+                          pattern: ^(|[a-z0-9]([-a-z0-9]*[a-z0-9](\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)?)$
+                          type: string
+                        keys:
+                          description: |-
+                            keys lists the storage prefixes bindings of this resource use: the
+                            export's identity, or the formerly shared identity after a conversion.
+                          items:
+                            type: string
+                          type: array
+                          x-kubernetes-list-type: set
+                        resource:
+                          description: |-
+                            resource is the name of the resource.
+                            A subresource may be claimed as "resource/subresource",
+                            e.g. "serviceaccounts/token", in the style of RBAC rules.
+                            Note: it is worth noting that you can not ask for permissions for resource provided by a CRD
+                            not provided by an api export.
+                          maxLength: 127
+                          pattern: ^[a-z][-a-z0-9]*[a-z0-9](/[a-z][-a-z0-9]*[a-z0-9])?$
+                          type: string
+                      required:
+                      - resource
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - group
+                    - resource
+                    x-kubernetes-list-type: map
+                type: object
               virtualWorkspaces:
                 description: |-
                   virtualWorkspaces contains all APIExport virtual workspace URLs.
